@@ -1,0 +1,2 @@
+# PATENT-TAKIP
+HR
