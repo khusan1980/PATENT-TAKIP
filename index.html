@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patent Takip Sistemi - Admin Onaylı</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--tg-theme-bg-color, #0f0f23);
+            color: var(--tg-theme-text-color, #e0e0e0);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            padding: 10px;
+            font-size: 14px;
+        }
+        h1 {
+            text-align: center;
+            color: var(--tg-theme-link-color, #4fc3f7);
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .stat-card {
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            padding: 12px 8px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card .number {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--tg-theme-link-color, #4fc3f7);
+        }
+        .stat-card .label {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 10px 12px;
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: var(--tg-theme-text-color, #e0e0e0);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        .nav-tab.active {
+            background: var(--tg-theme-link-color, #4fc3f7);
+            color: #000;
+            border-color: var(--tg-theme-link-color, #4fc3f7);
+        }
+        .form-section {
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        .section-card {
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .section-card h3 {
+            font-size: 16px;
+            color: var(--tg-theme-link-color, #4fc3f7);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(79,195,247,0.3);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-bottom: 4px;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: var(--tg-theme-bg-color, #0f0f23);
+            color: var(--tg-theme-text-color, #e0e0e0);
+            font-size: 13px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--tg-theme-link-color, #4fc3f7);
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: var(--tg-theme-button-color, #4fc3f7);
+            color: var(--tg-theme-button-text-color, #000);
+            width: 100%;
+        }
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-warning {
+            background: #e67e22;
+            color: white;
+        }
+        .btn-info {
+            background: #3498db;
+            color: white;
+        }
+        .btn-approve {
+            background: #27ae60;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-reject {
+            background: #e74c3c;
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .search-bar input,
+        .search-bar select {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            color: var(--tg-theme-text-color, #e0e0e0);
+            font-size: 14px;
+        }
+        .table-container {
+            overflow-x: auto;
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            border-radius: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 2000px;
+        }
+        thead {
+            background: rgba(79,195,247,0.15);
+            position: sticky;
+            top: 0;
+        }
+        th {
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--tg-theme-link-color, #4fc3f7);
+            border-bottom: 2px solid rgba(79,195,247,0.3);
+            white-space: nowrap;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        tbody tr:hover {
+            background: rgba(79,195,247,0.05);
+        }
+        .expiring-soon {
+            background: rgba(231, 76, 60, 0.2) !important;
+            border-left: 3px solid #e74c3c;
+        }
+        .expired {
+            background: rgba(231, 76, 60, 0.4) !important;
+            border-left: 3px solid #c0392b;
+        }
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-active { background: #27ae60; color: white; }
+        .status-inactive { background: #e74c3c; color: white; }
+        .status-pending { background: #f39c12; color: white; }
+        .status-approved { background: #27ae60; color: white; }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .filter-section {
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .highlight-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: 2px solid #e74c3c;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .days-remaining {
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .days-critical {
+            background: #e74c3c;
+            color: white;
+        }
+        .days-warning {
+            background: #f39c12;
+            color: white;
+        }
+        .days-ok {
+            background: #27ae60;
+            color: white;
+        }
+        .admin-badge {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        .pending-notice {
+            background: rgba(243, 156, 18, 0.2);
+            border: 2px solid #f39c12;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .pending-notice h4 {
+            color: #f39c12;
+            margin-bottom: 5px;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: var(--tg-theme-bg-color, #0f0f23);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 600px;
+        }
+        .modal h2 {
+            color: #4fc3f7;
+            margin-bottom: 15px;
+        }
+        .modal .btn-close {
+            float: right;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .pending-item {
+            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #f39c12;
+        }
+        .pending-item.approved {
+            border-left-color: #27ae60;
+        }
+        .pending-item.rejected {
+            border-left-color: #e74c3c;
+        }
+        .pending-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .pending-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .change-info {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+        @media (max-width: 600px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 Patent Takip Sistemi</h1>
+    
+    <!-- Admin Badge -->
+    <div id="adminBadge" style="display:none; text-align:center;">
+        <span class="admin-badge">🔐 ADMIN PANEL</span>
+    </div>
+
+    <!-- Pending Notice -->
+    <div id="pendingNotice" class="pending-notice" style="display:none;">
+        <h4>⏳ Tasdiq kutilmoqda</h4>
+        <p>Sizning o'zgartirish so'rovingiz admin tomonidan ko'rib chiqilmoqda</p>
+    </div>
+
+    <!-- İstatistikler -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="number" id="statTotal">0</div>
+            <div class="label">Toplam</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="statExpiring10">0</div>
+            <div class="label">10 Gün İçinde</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="statExpired">0</div>
+            <div class="label">Süresi Dolmuş</div>
+        </div>
+        <div class="stat-card" id="pendingStatCard" style="display:none;">
+            <div class="number" id="statPending">0</div>
+            <div class="label">Tasdiq Kutayotgan</div>
+        </div>
+    </div>
+
+    <!-- Aksiyon Butonları -->
+    <div class="action-buttons">
+        <button class="btn btn-primary" onclick="showSection('form')" style="flex:1;">➕ Yeni</button>
+        <button class="btn btn-warning" onclick="showSection('list')" style="flex:1;"> Liste</button>
+        <button class="btn btn-success" onclick="exportToExcel()" style="flex:1;">📊 Export</button>
+        <button class="btn btn-info" onclick="showImportModal()" style="flex:1;">📥 Import</button>
+        <button class="btn highlight-btn" onclick="highlightExpiring10Days()" style="flex:1;">⚠️ 10 Gün</button>
+        <button class="btn" id="adminPanelBtn" onclick="showAdminPanel()" style="flex:1; background:#9b59b6; color:white; display:none;">🔐 Admin Panel</button>
+    </div>
+
+    <!-- FİLTRE BÖLÜMÜ -->
+    <div class="filter-section" id="filterSection" style="display:none;">
+        <h3 style="color:#4fc3f7; margin-bottom:10px;">🔍 Filtreler</h3>
+        <div class="search-bar">
+            <input type="text" id="filterName" placeholder="Adı Soyadı ara..." oninput="applyFilters()">
+            <input type="text" id="filterSicil" placeholder="Sicil No ara..." oninput="applyFilters()">
+            <input type="text" id="filterProject" placeholder="Proje Adı ara..." oninput="applyFilters()">
+            <select id="filterStatus" onchange="applyFilters()">
+                <option value="">Tüm Durumlar</option>
+                <option value="Aktif">Aktif</option>
+                <option value="Pasif">Pasif</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- FORM BÖLÜMÜ -->
+    <div class="form-section active" id="sectionForm">
+        <div class="section-card">
+            <h3>📌 Genel Bilgiler</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Sicil No *</label>
+                    <input type="text" id="sicil" required>
+                </div>
+                <div class="form-group">
+                    <label>Güncel Durumu</label>
+                    <select id="guncelDurum">
+                        <option value="Aktif">Aktif</option>
+                        <option value="Pasif">Pasif</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Proje Adı</label>
+                    <input type="text" id="projeAdi">
+                </div>
+                <div class="form-group full-width">
+                    <label>Adı Soyadı *</label>
+                    <input type="text" id="adiSoyadi" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3>📅 Tarih Bilgileri</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Şantiye Giriş Tarihi</label>
+                    <input type="date" id="santiyeGiris">
+                </div>
+                <div class="form-group">
+                    <label>Resmi Giriş Tarihi</label>
+                    <input type="date" id="resmiGiris">
+                </div>
+                <div class="form-group">
+                    <label>Doğum Tarihi</label>
+                    <input type="date" id="dogumTarihi">
+                </div>
+                <div class="form-group">
+                    <label>INN No</label>
+                    <input type="text" id="innNo">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3>📜 Patent Bilgileri</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Patent Alış Tarihi</label>
+                    <input type="date" id="patentAlis">
+                </div>
+                <div class="form-group">
+                    <label>Patent Bitiş Tarihi</label>
+                    <input type="date" id="patentBitis">
+                </div>
+                <div class="form-group">
+                    <label>Patent Seri No</label>
+                    <input type="text" id="patentSeri">
+                </div>
+                <div class="form-group">
+                    <label>Patent No</label>
+                    <input type="text" id="patentNo">
+                </div>
+                <div class="form-group">
+                    <label>Patent Form Seri No</label>
+                    <input type="text" id="patentFormSeri">
+                </div>
+                <div class="form-group">
+                    <label>Patent Form No</label>
+                    <input type="text" id="patentFormNo">
+                </div>
+                <div class="form-group">
+                    <label>Patent Ödeme Tarihi</label>
+                    <input type="date" id="patentOdeme">
+                </div>
+                <div class="form-group">
+                    <label>Patent Çeki Başlangıç Tarihi</label>
+                    <input type="date" id="patentCekiBaslangic">
+                </div>
+                <div class="form-group">
+                    <label>Patent Çeki Bitiş Tarihi *</label>
+                    <input type="date" id="patentCekiBitis" required>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveWorker()">💾 Kaydet</button>
+    </div>
+
+    <!-- LİSTE BÖLÜMÜ -->
+    <div class="form-section" id="sectionList">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder=" Hızlı ara..." oninput="renderTable()">
+        </div>
+        <div class="table-container">
+            <table id="workerTable">
+                <thead>
+                    <tr>
+                        <th>Sıra</th>
+                        <th>Sicil</th>
+                        <th>Adı Soyadı</th>
+                        <th>Proje Adı</th>
+                        <th>Güncel Durum</th>
+                        <th>Şantiye Giriş</th>
+                        <th>Resmi Giriş</th>
+                        <th>Doğum Tarihi</th>
+                        <th>INN No</th>
+                        <th>Patent Alış</th>
+                        <th>Patent Bitiş</th>
+                        <th>Patent Seri</th>
+                        <th>Patent No</th>
+                        <th>Patent Form Seri</th>
+                        <th>Patent Form No</th>
+                        <th>Patent Ödeme</th>
+                        <th>Patent Çeki Başlangıç</th>
+                        <th>Patent Çeki Bitiş</th>
+                        <th>Kalan Gün</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="workerListBody"></tbody>
+            </table>
+        </div>
+        <div class="empty" id="emptyMessage">Henüz kayıt yok</div>
+    </div>
+
+    <!-- ADMIN PANEL MODAL -->
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal">
+            <button class="btn-close" onclick="closeAdminPanel()">×</button>
+            <h2>🔐 Admin Panel - Tasdiq So'rovlari</h2>
+            <div id="pendingRequestsList">
+                <div class="empty">Tasdiq kutilayotgan so'rovlar yo'q</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMPORT MODAL -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <button class="btn-close" onclick="closeImportModal()">×</button>
+            <h2> Excel'dan Import</h2>
+            <p style="margin-bottom:15px; opacity:0.7; font-size:13px;">
+                Excel faylini tanlang. Fayl quyidagi ustunlarni o'z ichiga olishi kerak
+            </p>
+            
+            <div class="file-input-wrapper" style="position:relative; overflow:hidden; display:inline-block; width:100%;">
+                <div style="display:block; padding:15px; background:rgba(79,195,247,0.1); border:2px dashed #4fc3f7; border-radius:8px; text-align:center; color:#4fc3f7; font-weight:bold; cursor:pointer;">
+                    📁 Excel faylini tanlash uchun bosing
+                </div>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+            </div>
+
+            <div id="importPreview" style="display:none; margin-top:15px; max-height:300px; overflow-y:auto;">
+                <h4 style="color:#4fc3f7; margin:15px 0 10px;">📋 Oldindan ko'rish (<span id="importCount">0</span> ta qator)</h4>
+                <div style="overflow-x:auto;">
+                    <table id="previewTable" style="min-width:auto; font-size:11px;">
+                        <thead id="previewHead"></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="btn btn-success" onclick="confirmImport()" style="flex:1;">✅ Import Qilish</button>
+                    <button class="btn btn-danger" onclick="closeImportModal()" style="flex:1;"> Bekor Qilish</button>
+                </div>
+            </div>
+
+            <div id="importResult" style="display:none; margin-top:15px; padding:15px; border-radius:8px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Ma'lumotlar
+        let workers = JSON.parse(localStorage.getItem('patent_workers') || '[]');
+        let pendingRequests = JSON.parse(localStorage.getItem('patent_pending') || '[]');
+        let editIndex = -1;
+        let highlightMode = false;
+        let importData = [];
+        let isAdmin = false;
+        let currentUser = tg.initDataUnsafe?.user?.id || 'unknown';
+
+        // Admin ID (o'zgartiring!)
+        const ADMIN_ID = 123456789; // Telegram user ID ingizni kiriting
+
+        // Admin ekanligini tekshirish
+        function checkAdmin() {
+            // Telegram user ID orqali tekshirish
+            if (currentUser === ADMIN_ID || currentUser === 'unknown') {
+                isAdmin = true;
+                document.getElementById('adminBadge').style.display = 'block';
+                document.getElementById('adminPanelBtn').style.display = 'block';
+                document.getElementById('pendingStatCard').style.display = 'block';
+            }
+        }
+
+        // Ustun nomlarini xaritalash
+        const columnMapping = {
+            'sicil no': 'sicil', 'sicil': 'sicil',
+            'güncel durumu': 'guncelDurum', 'guncel durumu': 'guncelDurum', 'durum': 'guncelDurum',
+            'proje adı': 'projeAdi', 'proje adi': 'projeAdi', 'proje': 'projeAdi',
+            'adı soyadı': 'adiSoyadi', 'adi soyadi': 'adiSoyadi', 'ad soyad': 'adiSoyadi',
+            'şantiye giriş tarihi': 'santiyeGiris', 'santiye giris tarihi': 'santiyeGiris',
+            'resmi giriş tarihi': 'resmiGiris', 'resmi giris tarihi': 'resmiGiris',
+            'doğum tarihi': 'dogumTarihi', 'dogum tarihi': 'dogumTarihi',
+            'inn no': 'innNo', 'inn': 'innNo',
+            'patent alış tarihi': 'patentAlis', 'patent alis tarihi': 'patentAlis',
+            'patent bitiş tarihi': 'patentBitis', 'patent bitis tarihi': 'patentBitis',
+            'patent seri no': 'patentSeri', 'patent seri': 'patentSeri',
+            'patent no': 'patentNo',
+            'patent form seri no': 'patentFormSeri', 'patent form seri': 'patentFormSeri',
+            'patent form no': 'patentFormNo',
+            'patent ödeme tarihi': 'patentOdeme', 'patent odeme tarihi': 'patentOdeme',
+            'patent çeki başlangıç tarihi': 'patentCekiBaslangic', 'patent ceki baslangic tarihi': 'patentCekiBaslangic',
+            'patent çeki bitiş tarihi': 'patentCekiBitis', 'patent ceki bitis tarihi': 'patentCekiBitis'
+        };
+
+        // Tarih parse
+        function parseDate(value) {
+            if (!value) return '';
+            if (typeof value === 'number') {
+                const date = new Date((value - 25569) * 86400 * 1000);
+                return date.toISOString().split('T')[0];
+            }
+            const str = String(value).trim();
+            if (str.match(/^\d{1,2}[./]\d{1,2}[./]\d{4}$/)) {
+                const parts = str.split(/[./]/);
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            if (str.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) return str;
+            if (str.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                const parts = str.split('/');
+                return `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+            }
+            return str;
+        }
+
+        // Kunlarni hisoblash
+        function calculateDaysRemaining(dateStr) {
+            if (!dateStr) return null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const targetDate = new Date(dateStr);
+            const diffTime = targetDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // Tarih format
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('tr-TR');
+        }
+
+        // Bo'lim o'zgartirish
+        function showSection(section) {
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            if (section === 'form') {
+                document.getElementById('sectionForm').classList.add('active');
+                document.getElementById('filterSection').style.display = 'none';
+            } else {
+                document.getElementById('sectionList').classList.add('active');
+                document.getElementById('filterSection').style.display = 'block';
+                renderTable();
+            }
+        }
+
+        // Form ma'lumotlarini olish
+        function getFormData() {
+            const fields = [
+                'sicil', 'guncelDurum', 'projeAdi', 'adiSoyadi',
+                'santiyeGiris', 'resmiGiris', 'dogumTarihi', 'innNo',
+                'patentAlis', 'patentBitis', 'patentSeri', 'patentNo',
+                'patentFormSeri', 'patentFormNo', 'patentOdeme',
+                'patentCekiBaslangic', 'patentCekiBitis'
+            ];
+            const data = {};
+            fields.forEach(f => {
+                const el = document.getElementById(f);
+                data[f] = el ? el.value : '';
+            });
+            return data;
+        }
+
+        // Formni tozalash
+        function clearForm() {
+            document.querySelectorAll('#sectionForm input, #sectionForm select').forEach(el => {
+                if (el.type !== 'button') el.value = '';
+            });
+            editIndex = -1;
+        }
+
+        // Saqlash (Admin tasdiq bilan)
+        function saveWorker() {
+            const data = getFormData();
+
+            if (!data.sicil || !data.adiSoyadi || !data.patentCekiBitis) {
+                tg.showAlert('Lütfen Sicil No, Adı Soyadı ve Patent Çeki Bitiş Tarihi alanlarını doldurun!');
+                return;
+            }
+
+            data.id = Date.now();
+            data.kayitTarihi = new Date().toLocaleDateString('tr-TR');
+            data.requestedBy = currentUser;
+            data.requestTime = new Date().toISOString();
+
+            if (editIndex >= 0) {
+                // O'zgartirish so'rovi yaratish
+                const oldData = workers[editIndex];
+                const changes = findChanges(oldData, data);
+                
+                if (Object.keys(changes).length > 0) {
+                    const request = {
+                        id: Date.now(),
+                        type: 'edit',
+                        index: editIndex,
+                        oldData: oldData,
+                        newData: data,
+                        changes: changes,
+                        requestedBy: currentUser,
+                        requestTime: new Date().toISOString(),
+                        status: 'pending'
+                    };
+                    
+                    pendingRequests.push(request);
+                    localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
+                    
+                    // Admin'ga xabar yuborish (simulyatsiya)
+                    notifyAdmin('edit', data);
+                    
+                    tg.showAlert('✅ O\'zgartirish so\'rovi yuborildi! Admin tasdiqini kuting.');
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            } else {
+                // Yangi qo'shish - avtomatik tasdiqlanadi
+                workers.push(data);
+                localStorage.setItem('patent_workers', JSON.stringify(workers));
+                tg.showAlert('✅ Yangi qo\'shildi!');
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+
+            clearForm();
+            updateStats();
+        }
+
+        // O'zgarishlarni topish
+        function findChanges(oldData, newData) {
+            const changes = {};
+            Object.keys(newData).forEach(key => {
+                if (oldData[key] !== newData[key]) {
+                    changes[key] = {
+                        old: oldData[key],
+                        new: newData[key]
+                    };
+                }
+            });
+            return changes;
+        }
+
+        // Admin'ga xabar
+        function notifyAdmin(type, data) {
+            // Bu yerda Telegram bot orqali admin'ga xabar yuborish mumkin
+            console.log(`Admin'ga xabar: ${type} - ${data.adiSoyadi}`);
+        }
+
+        // Admin panel ko'rsatish
+        function showAdminPanel() {
+            if (!isAdmin) {
+                tg.showAlert('Siz admin emassiz!');
+                return;
+            }
+            
+            document.getElementById('adminModal').classList.add('show');
+            renderPendingRequests();
+        }
+
+        // Admin panel yopish
+        function closeAdminPanel() {
+            document.getElementById('adminModal').classList.remove('show');
+        }
+
+        // Tasdiq so'rovlarini ko'rsatish
+        function renderPendingRequests() {
+            const listDiv = document.getElementById('pendingRequestsList');
+            
+            if (pendingRequests.length === 0) {
+                listDiv.innerHTML = '<div class="empty">Tasdiq kutilayotgan so\'rovlar yo\'q</div>';
+                return;
+            }
+
+            const pending = pendingRequests.filter(r => r.status === 'pending');
+            
+            if (pending.length === 0) {
+                listDiv.innerHTML = '<div class="empty">Tasdiq kutilayotgan so\'rovlar yo\'q</div>';
+                return;
+            }
+
+            listDiv.innerHTML = pending.map(req => {
+                const userName = req.requestedBy || 'Noma\'lum';
+                const time = new Date(req.requestTime).toLocaleString('tr-TR');
+                
+                let changesHtml = '';
+                Object.keys(req.changes).forEach(key => {
+                    const change = req.changes[key];
+                    changesHtml += `<div class="change-info">
+                        <strong>${key}:</strong> ${change.old || '-'} → <strong style="color:#27ae60">${change.new || '-'}</strong>
+                    </div>`;
+                });
+
+                return `
+                <div class="pending-item">
+                    <div class="pending-header">
+                        <strong>${req.type === 'edit' ? '✏️ O\'zgartirish' : '➕ Yangi'}</strong>
+                        <span style="font-size:11px; opacity:0.7">${time}</span>
+                    </div>
+                    <div style="margin:10px 0;">
+                        <strong>${req.newData.adiSoyadi}</strong> - Sicil: ${req.newData.sicil}
+                    </div>
+                    ${changesHtml}
+                    <div class="pending-actions">
+                        <button class="btn btn-approve" onclick="approveRequest(${req.id})">✅ Tasdiqlash</button>
+                        <button class="btn btn-reject" onclick="rejectRequest(${req.id})">❌ Rad etish</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // So'rovni tasdiqlash
+        function approveRequest(requestId) {
+            const index = pendingRequests.findIndex(r => r.id === requestId);
+            if (index === -1) return;
+
+            const request = pendingRequests[index];
+            
+            if (request.type === 'edit') {
+                workers[request.index] = request.newData;
+                localStorage.setItem('patent_workers', JSON.stringify(workers));
+            }
+
+            request.status = 'approved';
+            pendingRequests.splice(index, 1);
+            localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
+
+            renderPendingRequests();
+            updateStats();
+            tg.showAlert('✅ So\'rov tasdiqlandi!');
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        // So'rovni rad etish
+        function rejectRequest(requestId) {
+            const index = pendingRequests.findIndex(r => r.id === requestId);
+            if (index === -1) return;
+
+            pendingRequests[index].status = 'rejected';
+            pendingRequests.splice(index, 1);
+            localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
+
+            renderPendingRequests();
+            updateStats();
+            tg.showAlert('❌ So\'rov rad etildi!');
+        }
+
+        // O'zgartirish
+        function editWorker(index) {
+            const w = workers[index];
+            editIndex = index;
+
+            Object.keys(w).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) el.value = w[key] || '';
+            });
+
+            showSection('form');
+            window.scrollTo(0, 0);
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        // O'chirish
+        function deleteWorker(index) {
+            tg.showConfirm('Bu kaydı silmek istediğinizden emin misiniz?', (ok) => {
+                if (ok) {
+                    workers.splice(index, 1);
+                    localStorage.setItem('patent_workers', JSON.stringify(workers));
+                    renderTable();
+                    updateStats();
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+            });
+        }
+
+        // 10 gün
+        function highlightExpiring10Days() {
+            highlightMode = !highlightMode;
+            renderTable();
+            if (highlightMode) {
+                tg.showAlert('⚠️ 10 gün içinde biten patentler kırmızı ile vurgulanıyor!');
+            } else {
+                tg.showAlert('Normal görünüme geçildi');
+            }
+        }
+
+        // Filtre
+        function applyFilters() {
+            renderTable();
+        }
+
+        // Tablo
+        function renderTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterName = document.getElementById('filterName').value.toLowerCase();
+            const filterSicil = document.getElementById('filterSicil').value.toLowerCase();
+            const filterProject = document.getElementById('filterProject').value.toLowerCase();
+            const filterStatus = document.getElementById('filterStatus').value;
+
+            const tbody = document.getElementById('workerListBody');
+            const emptyMsg = document.getElementById('emptyMessage');
+            const table = document.getElementById('workerTable');
+
+            let filtered = workers.filter(w => {
+                const matchesSearch = Object.values(w).join(' ').toLowerCase().includes(search);
+                const matchesName = !filterName || (w.adiSoyadi || '').toLowerCase().includes(filterName);
+                const matchesSicil = !filterSicil || (w.sicil || '').toLowerCase().includes(filterSicil);
+                const matchesProject = !filterProject || (w.projeAdi || '').toLowerCase().includes(filterProject);
+                const matchesStatus = !filterStatus || w.guncelDurum === filterStatus;
+                return matchesSearch && matchesName && matchesSicil && matchesProject && matchesStatus;
+            });
+
+            if (highlightMode) {
+                filtered.sort((a, b) => {
+                    const daysA = calculateDaysRemaining(a.patentCekiBitis);
+                    const daysB = calculateDaysRemaining(b.patentCekiBitis);
+                    if (daysA !== null && daysA <= 10) return -1;
+                    if (daysB !== null && daysB <= 10) return 1;
+                    return 0;
+                });
+            }
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '';
+                emptyMsg.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            table.style.display = 'table';
+
+            tbody.innerHTML = filtered.map((w, i) => {
+                const realIndex = workers.indexOf(w);
+                const daysRemaining = calculateDaysRemaining(w.patentCekiBitis);
+                let daysClass = 'days-ok';
+                let rowClass = '';
+
+                if (daysRemaining !== null) {
+                    if (daysRemaining < 0) {
+                        daysClass = 'days-critical';
+                        rowClass = 'expired';
+                    } else if (daysRemaining <= 10) {
+                        daysClass = 'days-critical';
+                        if (highlightMode) rowClass = 'expiring-soon';
+                    } else if (daysRemaining <= 30) {
+                        daysClass = 'days-warning';
+                    }
+                }
+
+                const daysText = daysRemaining !== null 
+                    ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)} gün önce` : `${daysRemaining} gün`)
+                    : '-';
+
+                return `<tr class="${rowClass}">
+                    <td>${i + 1}</td>
+                    <td>${w.sicil || ''}</td>
+                    <td><strong>${w.adiSoyadi || ''}</strong></td>
+                    <td>${w.projeAdi || ''}</td>
+                    <td><span class="status-badge ${w.guncelDurum === 'Aktif' ? 'status-active' : 'status-inactive'}">${w.guncelDurum || ''}</span></td>
+                    <td>${formatDate(w.santiyeGiris)}</td>
+                    <td>${formatDate(w.resmiGiris)}</td>
+                    <td>${formatDate(w.dogumTarihi)}</td>
+                    <td>${w.innNo || ''}</td>
+                    <td>${formatDate(w.patentAlis)}</td>
+                    <td>${formatDate(w.patentBitis)}</td>
+                    <td>${w.patentSeri || ''}</td>
+                    <td>${w.patentNo || ''}</td>
+                    <td>${w.patentFormSeri || ''}</td>
+                    <td>${w.patentFormNo || ''}</td>
+                    <td>${formatDate(w.patentOdeme)}</td>
+                    <td>${formatDate(w.patentCekiBaslangic)}</td>
+                    <td>${formatDate(w.patentCekiBitis)}</td>
+                    <td><span class="days-remaining ${daysClass}">${daysText}</span></td>
+                    <td>
+                        <button class="btn-edit" onclick="editWorker(${realIndex})">✏️</button>
+                        <button class="btn-danger" onclick="deleteWorker(${realIndex})">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // İstatistik
+        function updateStats() {
+            const total = workers.length;
+            let expiring10 = 0;
+            let expired = 0;
+            let pending = pendingRequests.filter(r => r.status === 'pending').length;
+
+            workers.forEach(w => {
+                const days = calculateDaysRemaining(w.patentCekiBitis);
+                if (days !== null) {
+                    if (days < 0) expired++;
+                    else if (days <= 10) expiring10++;
+                }
+            });
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statExpiring10').textContent = expiring10;
+            document.getElementById('statExpired').textContent = expired;
+            document.getElementById('statPending').textContent = pending;
+        }
+
+        // Export
+        function exportToExcel() {
+            if (workers.length === 0) {
+                tg.showAlert('Dışa aktarılacak veri yok!');
+                return;
+            }
+
+            const exportData = workers.map((w, index) => ({
+                'Sıra': index + 1,
+                'Sicil No': w.sicil,
+                'Güncel Durumu': w.guncelDurum,
+                'Proje Adı': w.projeAdi,
+                'Adı Soyadı': w.adiSoyadi,
+                'Şantiye Giriş Tarihi': formatDate(w.santiyeGiris),
+                'Resmi Giriş Tarihi': formatDate(w.resmiGiris),
+                'Doğum Tarihi': formatDate(w.dogumTarihi),
+                'INN No': w.innNo,
+                'Patent Alış Tarihi': formatDate(w.patentAlis),
+                'Patent Bitiş Tarihi': formatDate(w.patentBitis),
+                'Patent Seri No': w.patentSeri,
+                'Patent No': w.patentNo,
+                'Patent Form Seri No': w.patentFormSeri,
+                'Patent Form No': w.patentFormNo,
+                'Patent Ödeme Tarihi': formatDate(w.patentOdeme),
+                'Patent Çeki Başlangıç Tarihi': formatDate(w.patentCekiBaslangic),
+                'Patent Çeki Bitiş Tarihi': formatDate(w.patentCekiBitis),
+                'Kalan Gün': calculateDaysRemaining(w.patentCekiBitis) !== null ? calculateDaysRemaining(w.patentCekiBitis) + ' gün' : '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Patent Takip');
+
+            const fileName = `Patent_Takip_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            tg.showAlert(`✅ Excel dosyası indirildi: ${fileName}`);
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        // Import
+        function showImportModal() {
+            document.getElementById('importModal').classList.add('show');
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importResult').style.display = 'none';
+            document.getElementById('excelFile').value = '';
+            importData = [];
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('show');
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    if (jsonData.length < 2) {
+                        tg.showAlert('Excel faylida ma\'lumot topilmadi!');
+                        return;
+                    }
+
+                    const headers = jsonData[0].map(h => String(h).toLowerCase().trim());
+                    const columnMap = {};
+                    
+                    headers.forEach((header, index) => {
+                        if (columnMapping[header]) {
+                            columnMap[index] = columnMapping[header];
+                        }
+                    });
+
+                    importData = [];
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row || row.length === 0) continue;
+
+                        const record = {};
+                        Object.keys(columnMap).forEach(colIndex => {
+                            const fieldName = columnMap[colIndex];
+                            let value = row[colIndex];
+                            
+                            if (['santiyeGiris', 'resmiGiris', 'dogumTarihi', 'patentAlis', 
+                                 'patentBitis', 'patentOdeme', 'patentCekiBaslangic', 'patentCekiBitis']
+                                .includes(fieldName)) {
+                                value = parseDate(value);
+                            }
+                            
+                            record[fieldName] = value ? String(value).trim() : '';
+                        });
+
+                        if (record.sicil && record.adiSoyadi) {
+                            record.id = Date.now() + i;
+                            record.kayitTarihi = new Date().toLocaleDateString('tr-TR');
+                            importData.push(record);
+                        }
+                    }
+
+                    if (importData.length === 0) {
+                        tg.showAlert('Import qilish uchun ma\'lumot topilmadi!');
+                        return;
+                    }
+
+                    showImportPreview(headers, importData);
+
+                } catch (error) {
+                    console.error('Excel o\'qish xatosi:', error);
+                    tg.showAlert('Excel faylini o\'qishda xatolik!');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function showImportPreview(headers, data) {
+            const previewDiv = document.getElementById('importPreview');
+            const previewHead = document.getElementById('previewHead');
+            const previewBody = document.getElementById('previewBody');
+            const importCount = document.getElementById('importCount');
+
+            importCount.textContent = data.length;
+
+            const headerRow = document.createElement('tr');
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                headerRow.appendChild(th);
+            });
+            previewHead.appendChild(headerRow);
+
+            const previewData = data.slice(0, 5);
+            previewData.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach((h, index) => {
+                    const td = document.createElement('td');
+                    const fieldName = columnMapping[h.toLowerCase().trim()];
+                    td.textContent = fieldName ? (row[fieldName] || '-') : (row[h] || '-');
+                    tr.appendChild(td);
+                });
+                previewBody.appendChild(tr);
+            });
+
+            if (data.length > 5) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = headers.length;
+                td.textContent = `... va yana ${data.length - 5} ta qator`;
+                td.style.textAlign = 'center';
+                td.style.opacity = '0.7';
+                tr.appendChild(td);
+                previewBody.appendChild(tr);
+            }
+
+            previewDiv.style.display = 'block';
+        }
+
+        function confirmImport() {
+            if (importData.length === 0) {
+                tg.showAlert('Import qilish uchun ma\'lumot yo\'q!');
+                return;
+            }
+
+            tg.showConfirm(`${importData.length} ta qatorni import qilmoqchimisiz?`, (ok) => {
+                if (ok) {
+                    workers = workers.concat(importData);
+                    localStorage.setItem('patent_workers', JSON.stringify(workers));
+                    
+                    updateStats();
+                    closeImportModal();
+                    
+                    tg.showAlert(`✅ ${importData.length} ta qator import qilindi!`);
+                    tg.HapticFeedback.notificationOccurred('success');
+                    
+                    importData = [];
+                }
+            });
+        }
+
+        // İlk yükleme
+        checkAdmin();
+        updateStats();
+        tg.ready();
+    </script>
+</body>
+</html>
