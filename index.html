@@ -18,17 +18,6 @@
         }
         h1 { text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 20px; }
         
-        .admin-badge {
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        
         .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
         .stat-card { background: white; padding: 12px 8px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .stat-card .number { font-size: 22px; font-weight: bold; color: #3498db; }
@@ -42,7 +31,6 @@
         .btn-info { background: #5dade2; }
         .btn-alert { background: #e74c3c; animation: pulse 2s infinite; }
         .btn-settings { background: #9b59b6; }
-        .btn-users { background: #1abc9c; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
         
         .form-section { display: none; }
@@ -86,8 +74,6 @@
         
         .btn-edit { background: #f39c12; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-right: 4px; }
         .btn-delete { background: #e74c3c; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-        .btn-approve { background: #27ae60; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-right: 4px; }
-        .btn-reject { background: #e74c3c; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
         
         .empty { text-align: center; padding: 40px; opacity: 0.6; }
         
@@ -106,7 +92,7 @@
         .modal-overlay.show { display: flex; }
         .modal {
             background: white; border-radius: 12px; padding: 20px;
-            max-width: 95%; max-height: 90vh; overflow-y: auto; width: 600px;
+            max-width: 95%; max-height: 90vh; overflow-y: auto; width: 500px;
         }
         .modal h2 { color: #2c3e50; margin-bottom: 15px; }
         .modal .btn-close { float: right; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; }
@@ -125,71 +111,6 @@
         }
         .settings-info strong { color: #9b59b6; }
         
-        .pending-notice {
-            background: rgba(243, 156, 18, 0.2);
-            border: 2px solid #f39c12;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .pending-notice h4 { color: #f39c12; margin-bottom: 5px; }
-        
-        .pending-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #f39c12;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .pending-item.approved { border-left-color: #27ae60; }
-        .pending-item.rejected { border-left-color: #e74c3c; }
-        
-        .pending-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .pending-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .change-info {
-            font-size: 12px;
-            background: #f8f9fa;
-            padding: 8px;
-            border-radius: 6px;
-            margin: 5px 0;
-        }
-        .change-info strong { color: #2c3e50; }
-        .change-info .old-value { color: #e74c3c; text-decoration: line-through; }
-        .change-info .new-value { color: #27ae60; font-weight: bold; }
-        
-        .user-log-item {
-            background: white;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 3px solid #3498db;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .user-log-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-            font-size: 12px;
-        }
-        .user-log-name { font-weight: bold; color: #2c3e50; }
-        .user-log-time { opacity: 0.7; }
-        .user-log-action { font-size: 12px; color: #555; }
-        
         @media (max-width: 600px) {
             .form-grid { grid-template-columns: 1fr; }
             .stats { grid-template-columns: 1fr 1fr 1fr; }
@@ -198,40 +119,26 @@
 </head>
 <body>
     <h1>📋 Patent Takip Sistemi</h1>
-    
-    <!-- Admin Badge (faqat admin uchun) -->
-    <div id="adminBadge" style="display:none; text-align:center;">
-        <span class="admin-badge">🔐 ADMIN PANEL</span>
-    </div>
-
-    <!-- Pending Notice (faqat oddiy foydalanuvchilar uchun) -->
-    <div id="pendingNotice" class="pending-notice" style="display:none;">
-        <h4>⏳ Tasdiq kutilmoqda</h4>
-        <p>Sizning o'zgartirish so'rovingiz admin tomonidan ko'rib chiqilmoqda</p>
-    </div>
 
     <div class="stats">
         <div class="stat-card"><div class="number" id="statTotal">0</div><div class="label">Toplam</div></div>
         <div class="stat-card"><div class="number" id="statExpiring10">0</div><div class="label">10 Gün İçinde</div></div>
         <div class="stat-card"><div class="number" id="statExpired">0</div><div class="label">Süresi Dolmuş</div></div>
-        <div class="stat-card" id="pendingStatCard" style="display:none;"><div class="number" id="statPending">0</div><div class="label">Tasdiq Kutayotgan</div></div>
     </div>
 
     <div class="action-buttons">
         <button class="btn btn-primary" onclick="showSection('form')">➕ Yeni</button>
-        <button class="btn btn-warning" onclick="showSection('list')">📋 Liste</button>
-        <button class="btn btn-success" onclick="exportToExcel()">📊 Export</button>
+        <button class="btn btn-warning" onclick="showSection('list')"> Liste</button>
+        <button class="btn btn-success" onclick="exportToExcel()"> Export</button>
         <button class="btn btn-info" onclick="showImportModal()">📥 Import</button>
-        <button class="btn btn-alert" onclick="highlightExpiring10Days()">⚠️ 10 Gün</button>
-        <button class="btn btn-settings" id="settingsBtn" onclick="showSettingsModal()" style="display:none;">⚙️ Sozlamalar</button>
-        <button class="btn btn-users" id="usersBtn" onclick="showUsersModal()" style="display:none;">👥 Foydalanuvchilar</button>
-        <button class="btn btn-settings" id="adminPanelBtn" onclick="showAdminPanel()" style="display:none;">🔐 Admin Panel</button>
+        <button class="btn btn-alert" onclick="highlightExpiring10Days()">️ 10 Gün</button>
+        <button class="btn btn-settings" onclick="showSettingsModal()">⚙️ Sozlamalar</button>
     </div>
 
     <!-- FORM BÖLÜMÜ -->
     <div class="form-section" id="sectionForm">
         <div class="section-card">
-            <h3>📌 Genel Bilgiler</h3>
+            <h3> Genel Bilgiler</h3>
             <div class="form-grid">
                 <div class="form-group"><label>Sicil No *</label><input type="text" id="sicil"></div>
                 <div class="form-group"><label>Güncel Durumu</label><select id="guncelDurum"><option>Aktif</option><option>Pasif</option></select></div>
@@ -265,16 +172,16 @@
         <div class="section-card">
             <h3> Izoh (Admin uchun)</h3>
             <div class="form-group full-width">
-                <label>Nima o'zgartiryapsiz? (Admin'ga yuboriladi) *</label>
-                <textarea id="changeComment" rows="3" placeholder="Masalan: Patent çeki bitiş tarixini 2026-12-01 ga o'zgartirish kerak..." required></textarea>
+                <label>Nima o'zgartiryapsiz?</label>
+                <textarea id="changeComment" rows="3" placeholder="Masalan: Patent çeki bitiş tarixini o'zgartirish..."></textarea>
             </div>
         </div>
-        <button class="btn btn-primary" onclick="saveWorker()" style="width:100%;">💾 Tasdiq uchun yuborish</button>
+        <button class="btn btn-primary" onclick="saveWorker()" style="width:100%;">💾 Kaydet</button>
     </div>
 
     <!-- LİSTE BÖLÜMÜ -->
     <div class="form-section active" id="sectionList">
-        <div class="search-bar"><input type="text" id="searchInput" placeholder=" Ara..." oninput="renderTable()"></div>
+        <div class="search-bar"><input type="text" id="searchInput" placeholder="🔍 Ara..." oninput="renderTable()"></div>
         <div class="table-container">
             <table>
                 <thead>
@@ -283,7 +190,6 @@
                         <th>Adı Soyadı</th>
                         <th>Patent Çeki Bitiş Tarihi</th>
                         <th>Kalan Gün</th>
-                        <th>O'zgartirgan</th>
                         <th>İşlem</th>
                     </tr>
                 </thead>
@@ -293,29 +199,7 @@
         <div class="empty" id="emptyMessage">Henüz kayıt yok</div>
     </div>
 
-    <!-- ADMIN PANEL MODAL -->
-    <div class="modal-overlay" id="adminModal">
-        <div class="modal">
-            <button class="btn-close" onclick="closeAdminPanel()">×</button>
-            <h2>🔐 Admin Panel - Tasdiq So'rovlari</h2>
-            <div id="pendingRequestsList">
-                <div class="empty">Tasdiq kutilayotgan so'rovlar yo'q</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FOYDALANUVCHILAR MODAL -->
-    <div class="modal-overlay" id="usersModal">
-        <div class="modal">
-            <button class="btn-close" onclick="closeUsersModal()">×</button>
-            <h2>👥 Foydalanuvchilar Faoliyati</h2>
-            <div id="userActivityList">
-                <div class="empty">Hali hech qanday faoliyat yo'q</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SOZLAMALAR MODAL (faqat admin) -->
+    <!-- SOZLAMALAR MODAL -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <button class="btn-close" onclick="closeSettingsModal()">×</button>
@@ -327,7 +211,7 @@
                 3. Quyidagi maydonlarga kiriting
             </div>
             <div class="form-group" style="margin-bottom:10px;">
-                <label> Bot Token</label>
+                <label>🤖 Bot Token</label>
                 <input type="text" id="botToken" placeholder="123456:ABC-DEF...">
             </div>
             <div class="form-group" style="margin-bottom:10px;">
@@ -336,9 +220,9 @@
             </div>
             <div class="form-group" style="margin-bottom:15px;">
                 <label>📝 Test xabar yuborish</label>
-                <button class="btn btn-info" onclick="testNotification()" style="width:100%; margin-top:5px;">📤 Test Xabar Yuborish</button>
+                <button class="btn btn-info" onclick="testNotification()" style="width:100%; margin-top:5px;"> Test Xabar Yuborish</button>
             </div>
-            <button class="btn btn-success" onclick="saveSettings()" style="width:100%;"> Saqlash</button>
+            <button class="btn btn-success" onclick="saveSettings()" style="width:100%;">💾 Saqlash</button>
         </div>
     </div>
 
@@ -346,9 +230,9 @@
     <div class="modal-overlay" id="importModal">
         <div class="modal">
             <button class="btn-close" onclick="closeImportModal()">×</button>
-            <h2> Excel'dan Import</h2>
+            <h2>📥 Excel'dan Import</h2>
             <div class="file-input-wrapper">
-                <div class="file-input-label">📁 Excel faylini tanlash uchun bosing</div>
+                <div class="file-input-label"> Excel faylini tanlash uchun bosing</div>
                 <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
             </div>
             <div id="importPreview" style="display:none; margin-top:15px;">
@@ -366,48 +250,14 @@
         tg.expand();
         tg.ready();
 
-        // Ma'lumotlar
         let workers = JSON.parse(localStorage.getItem('patent_workers') || '[]');
-        let pendingRequests = JSON.parse(localStorage.getItem('patent_pending') || '[]');
-        let userActivity = JSON.parse(localStorage.getItem('patent_activity') || '[]);
         let editIndex = -1;
         let highlightMode = false;
         let importData = [];
-        let isAdmin = false;
-        let currentUser = tg.initDataUnsafe?.user?.id || 'user_' + Math.floor(Math.random() * 1000000);
-        let currentUserName = tg.initDataUnsafe?.user?.username || 'Anonymous';
-
-        // Admin ID (o'zgartiring!)
-        const ADMIN_ID = 123456789; // Telegram user ID ingizni kiriting
 
         // Sozlamalarni yuklash
         let BOT_TOKEN = localStorage.getItem('bot_token') || '';
         let ADMIN_CHAT_ID = localStorage.getItem('admin_chat_id') || '';
-
-        // Admin ekanligini tekshirish
-        function checkAdmin() {
-            if (currentUser === ADMIN_ID || currentUser === 'admin') {
-                isAdmin = true;
-                document.getElementById('adminBadge').style.display = 'block';
-                document.getElementById('settingsBtn').style.display = 'block';
-                document.getElementById('usersBtn').style.display = 'block';
-                document.getElementById('adminPanelBtn').style.display = 'block';
-                document.getElementById('pendingStatCard').style.display = 'block';
-            } else {
-                // Oddiy foydalanuvchi - pending so'rovlarni tekshirish
-                checkPendingStatus();
-            }
-        }
-
-        // Pending statusni tekshirish
-        function checkPendingStatus() {
-            const userPending = pendingRequests.filter(r => 
-                r.requestedBy === currentUser && r.status === 'pending'
-            );
-            if (userPending.length > 0) {
-                document.getElementById('pendingNotice').style.display = 'block';
-            }
-        }
 
         const columnMapping = {
             'sicil no': 'sicil', 'sicil': 'sicil',
@@ -529,16 +379,13 @@
         function findChanges(oldData, newData) {
             const changes = {};
             Object.keys(newData).forEach(key => {
-                if (oldData[key] !== newData[key] && key !== 'id' && key !== 'changedBy') {
+                if (oldData[key] !== newData[key] && key !== 'id') {
                     changes[key] = { old: oldData[key] || '-', new: newData[key] || '-' };
                 }
             });
             return changes;
         }
 
-        // ========================================
-        // SAQLASH - Admin tasdiq bilan
-        // ========================================
         function saveWorker() {
             const data = getFormData();
             const comment = document.getElementById('changeComment').value.trim();
@@ -547,47 +394,17 @@
                 tg.showAlert('Sicil No, Adı Soyadı ve Patent Çeki Bitiş Tarihi zorunludur!');
                 return;
             }
-            
-            if (!comment) {
-                tg.showAlert('Izoh (comment) yozish majburiy!');
-                return;
-            }
-            
             data.id = Date.now();
-            data.requestedBy = currentUser;
-            data.requestedByName = currentUserName;
-            data.requestTime = new Date().toISOString();
-            data.comment = comment;
             
             if (editIndex >= 0) {
-                // O'ZGARTIRISH - Admin tasdiq kutadi
                 const oldData = workers[editIndex];
                 const changes = findChanges(oldData, data);
                 
                 if (Object.keys(changes).length > 0) {
-                    const request = {
-                        id: Date.now(),
-                        type: 'edit',
-                        index: editIndex,
-                        oldData: oldData,
-                        newData: data,
-                        changes: changes,
-                        requestedBy: currentUser,
-                        requestedByName: currentUserName,
-                        requestTime: new Date().toISOString(),
-                        comment: comment,
-                        status: 'pending'
-                    };
-                    
-                    pendingRequests.push(request);
-                    localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
-                    
-                    // Admin'ga xabar
-                    let message = `✏️ <b>O'ZGARTIRISH SO'ROVI</b>\n\n`;
-                    message += `👤 <b>Foydalanuvchi:</b> ${currentUserName}\n`;
+                    let message = `✏️ <b>O'ZGARTIRISH</b>\n\n`;
                     message += `👤 <b>Ishchi:</b> ${data.adiSoyadi}\n`;
                     message += `🔢 <b>Sicil:</b> ${data.sicil}\n\n`;
-                    message += ` <b>Izoh:</b>\n<i>${comment}</i>\n\n`;
+                    message += ` <b>Izoh:</b>\n<i>${comment || 'Izoh yo\'q'}</i>\n\n`;
                     message += `📊 <b>O'zgarishlar:</b>\n`;
                     
                     Object.keys(changes).forEach(key => {
@@ -598,50 +415,40 @@
                     
                     message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
                     
-                    sendAdminNotification(message);
+                    sendAdminNotification(message).then(success => {
+                        if (success) {
+                            tg.showAlert('✅ O\'zgartirish saqlandi va admin\'ga bildirish yuborildi!');
+                        } else {
+                            tg.showAlert('⚠️ O\'zgartirish saqlandi, lekin admin\'ga bildirish yuborilmadi.');
+                        }
+                    });
                     
-                    tg.showAlert('✅ O\'zgartirish so\'rovi yuborildi! Admin tasdiqini kuting.');
-                    tg.HapticFeedback.notificationOccurred('success');
+                    workers[editIndex] = data;
+                    editIndex = -1;
                 } else {
                     tg.showAlert('Hech qanday o\'zgarish yo\'q!');
                     return;
                 }
             } else {
-                // YANGI QO'SHISH - avtomatik tasdiqlanadi
-                data.changedBy = currentUserName;
-                data.changedTime = new Date().toISOString();
                 workers.push(data);
-                localStorage.setItem('patent_workers', JSON.stringify(workers));
-                
-                // Faoliyatni yozish
-                userActivity.push({
-                    id: Date.now(),
-                    type: 'add',
-                    userName: currentUserName,
-                    userId: currentUser,
-                    workerName: data.adiSoyadi,
-                    workerSicil: data.sicil,
-                    time: new Date().toISOString(),
-                    comment: comment
-                });
-                localStorage.setItem('patent_activity', JSON.stringify(userActivity));
                 
                 let message = `➕ <b>YANGI QO'SHILDI</b>\n\n`;
-                message += `👤 <b>Foydalanuvchi:</b> ${currentUserName}\n`;
                 message += `👤 <b>Ishchi:</b> ${data.adiSoyadi}\n`;
                 message += `🔢 <b>Sicil:</b> ${data.sicil}\n`;
                 message += `📋 <b>Proje:</b> ${data.projeAdi || '-'}\n`;
-                message += ` <b>Patent Çeki Bitiş:</b> ${formatDate(data.patentCekiBitis)}\n`;
-                message += `\n📝 <b>Izoh:</b>\n<i>${comment}</i>\n`;
+                message += `📅 <b>Patent Çeki Bitiş:</b> ${formatDate(data.patentCekiBitis)}\n`;
+                if (comment) message += `\n <b>Izoh:</b>\n<i>${comment}</i>\n`;
                 message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
                 
                 sendAdminNotification(message);
-                tg.showAlert('✅ Yangi qo\'shildi!');
+                tg.showAlert('✅ Yangi qo\'shildi va admin\'ga bildirish yuborildi!');
             }
             
+            localStorage.setItem('patent_workers', JSON.stringify(workers));
             clearForm();
             updateStats();
             showSection('list');
+            tg.HapticFeedback.notificationOccurred('success');
         }
 
         function editWorker(index) {
@@ -654,42 +461,29 @@
         }
 
         function deleteWorker(index) {
-            const w = workers[index];
-            tg.showConfirm(`${w.adiSoyadi} ni o'chirish uchun izoh yozing:`, (ok, comment) => {
+            tg.showConfirm('Silmek istediğinize emin misiniz?', (ok) => {
                 if (ok) {
-                    const request = {
-                        id: Date.now(),
-                        type: 'delete',
-                        index: index,
-                        workerData: w,
-                        requestedBy: currentUser,
-                        requestedByName: currentUserName,
-                        requestTime: new Date().toISOString(),
-                        comment: comment || 'O\'chirish',
-                        status: 'pending'
-                    };
+                    const w = workers[index];
+                    workers.splice(index, 1);
+                    localStorage.setItem('patent_workers', JSON.stringify(workers));
                     
-                    pendingRequests.push(request);
-                    localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
-                    
-                    let message = `️ <b>O'CHIRISH SO'ROVI</b>\n\n`;
-                    message += `👤 <b>Foydalanuvchi:</b> ${currentUserName}\n`;
+                    let message = `🗑️ <b>O'CHIRILDI</b>\n\n`;
                     message += `👤 <b>Ishchi:</b> ${w.adiSoyadi}\n`;
                     message += `🔢 <b>Sicil:</b> ${w.sicil}\n`;
-                    message += `\n📝 <b>Sabab:</b>\n<i>${comment || 'Yo\'q'}</i>\n`;
-                    message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
-                    
+                    message += `⏰ ${new Date().toLocaleString('tr-TR')}`;
                     sendAdminNotification(message);
-                    tg.showAlert('✅ O\'chirish so\'rovi yuborildi! Admin tasdiqini kuting.');
+                    
+                    renderTable();
+                    updateStats();
                 }
-            }, true);
+            });
         }
 
         function highlightExpiring10Days() {
             highlightMode = !highlightMode;
             if (highlightMode) {
                 showSection('list');
-                tg.showAlert('⚠️ 10 gün içinde bitenler üstte gösteriliyor!');
+                tg.showAlert('️ 10 gün içinde bitenler üstte gösteriliyor!');
             } else {
                 tg.showAlert('Normal görünüme geçildi');
                 renderTable();
@@ -762,9 +556,9 @@
                     if (currentSection !== lastSection) {
                         lastSection = currentSection;
                         if (currentSection === 'expiring') {
-                            html += `<tr><td colspan="6" class="section-divider">⚠️ 10 GÜN İÇİNDE BİTECEKLER</td></tr>`;
+                            html += `<tr><td colspan="5" class="section-divider">️ 10 GÜN İÇİNDE BİTECEKLER</td></tr>`;
                         } else {
-                            html += `<tr><td colspan="6" class="section-divider">📋 DİĞER KAYITLAR</td></tr>`;
+                            html += `<tr><td colspan="5" class="section-divider"> DİĞER KAYITLAR</td></tr>`;
                         }
                     }
                 }
@@ -774,10 +568,9 @@
                     <td><strong>${w.adiSoyadi || ''}</strong></td>
                     <td>${formatDate(w.patentCekiBitis)}</td>
                     <td><span class="days-badge ${daysClass}">${daysText}</span></td>
-                    <td style="font-size:11px;opacity:0.7;">${w.changedBy || '-'}</td>
                     <td>
-                        <button class="btn-edit" onclick="editWorker(${realIndex})">✏️</button>
-                        <button class="btn-delete" onclick="deleteWorker(${realIndex})">🗑️</button>
+                        <button class="btn-edit" onclick="editWorker(${realIndex})">️</button>
+                        <button class="btn-delete" onclick="deleteWorker(${realIndex})">️</button>
                     </td>
                 </tr>`;
             });
@@ -787,8 +580,7 @@
 
         function updateStats() {
             document.getElementById('statTotal').textContent = workers.length;
-            let expiring10 = 0, expired = 0, pending = 0;
-            
+            let expiring10 = 0, expired = 0;
             workers.forEach(w => {
                 const days = calculateDaysRemaining(w.patentCekiBitis);
                 if (days !== null) {
@@ -796,200 +588,12 @@
                     else if (days <= 10) expiring10++;
                 }
             });
-            
-            if (isAdmin) {
-                pending = pendingRequests.filter(r => r.status === 'pending').length;
-                document.getElementById('statPending').textContent = pending;
-            }
-            
             document.getElementById('statExpiring10').textContent = expiring10;
             document.getElementById('statExpired').textContent = expired;
         }
 
         // ========================================
-        // ADMIN PANEL
-        // ========================================
-        function showAdminPanel() {
-            if (!isAdmin) {
-                tg.showAlert('Siz admin emassiz!');
-                return;
-            }
-            document.getElementById('adminModal').classList.add('show');
-            renderPendingRequests();
-        }
-
-        function closeAdminPanel() {
-            document.getElementById('adminModal').classList.remove('show');
-        }
-
-        function renderPendingRequests() {
-            const listDiv = document.getElementById('pendingRequestsList');
-            const pending = pendingRequests.filter(r => r.status === 'pending');
-            
-            if (pending.length === 0) {
-                listDiv.innerHTML = '<div class="empty">Tasdiq kutilayotgan so\'rovlar yo\'q</div>';
-                return;
-            }
-
-            listDiv.innerHTML = pending.map(req => {
-                const userName = req.requestedByName || 'Noma\'lum';
-                const time = new Date(req.requestTime).toLocaleString('tr-TR');
-                
-                let contentHtml = '';
-                if (req.type === 'edit') {
-                    Object.keys(req.changes).forEach(key => {
-                        const change = req.changes[key];
-                        const label = getFieldLabel(key);
-                        contentHtml += `<div class="change-info">
-                            <strong>${label}:</strong><br>
-                            <span class="old-value">${change.old}</span> → 
-                            <span class="new-value">${change.new}</span>
-                        </div>`;
-                    });
-                } else if (req.type === 'delete') {
-                    contentHtml = `<div class="change-info">
-                        <strong>O'chiriladigan ishchi:</strong> ${req.workerData.adiSoyadi} (Sicil: ${req.workerData.sicil})
-                    </div>`;
-                }
-
-                return `
-                <div class="pending-item">
-                    <div class="pending-header">
-                        <div>
-                            <strong>${req.type === 'edit' ? '✏️ O\'zgartirish' : '🗑️ O\'chirish'}</strong>
-                            <div style="font-size:11px;opacity:0.7;margin-top:3px;">
-                                👤 ${userName} • ${time}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="margin:10px 0;">
-                        ${req.type === 'edit' ? `<strong>${req.newData.adiSoyadi}</strong> - Sicil: ${req.newData.sicil}` : ''}
-                    </div>
-                    <div class="change-info" style="background:#fff3cd;padding:8px;border-radius:4px;margin:8px 0;">
-                        <strong>📝 Izoh:</strong><br>
-                        <i>${req.comment || 'Izoh yo\'q'}</i>
-                    </div>
-                    ${contentHtml}
-                    <div class="pending-actions">
-                        <button class="btn-approve" onclick="approveRequest(${req.id})">✅ Tasdiqlash</button>
-                        <button class="btn-reject" onclick="rejectRequest(${req.id})">❌ Rad etish</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function approveRequest(requestId) {
-            const index = pendingRequests.findIndex(r => r.id === requestId);
-            if (index === -1) return;
-
-            const request = pendingRequests[index];
-            
-            if (request.type === 'edit') {
-                workers[request.index] = request.newData;
-                workers[request.index].changedBy = request.requestedByName;
-                workers[request.index].changedTime = new Date().toISOString();
-                localStorage.setItem('patent_workers', JSON.stringify(workers));
-            } else if (request.type === 'delete') {
-                workers.splice(request.index, 1);
-                localStorage.setItem('patent_workers', JSON.stringify(workers));
-            }
-            
-            // Faoliyatni yozish
-            userActivity.push({
-                id: Date.now(),
-                type: request.type,
-                userName: request.requestedByName,
-                userId: request.requestedBy,
-                workerName: request.type === 'edit' ? request.newData.adiSoyadi : request.workerData.adiSoyadi,
-                workerSicil: request.type === 'edit' ? request.newData.sicil : request.workerData.sicil,
-                time: new Date().toISOString(),
-                comment: request.comment,
-                approvedBy: 'Admin',
-                approvedTime: new Date().toISOString()
-            });
-            localStorage.setItem('patent_activity', JSON.stringify(userActivity));
-
-            request.status = 'approved';
-            pendingRequests.splice(index, 1);
-            localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
-
-            // Foydalanuvchiga xabar
-            let message = `✅ <b>TASDIQLANDI</b>\n\n`;
-            message += `Sizning ${request.type === 'edit' ? 'o\'zgartirish' : 'o\'chirish'} so'rovingiz tasdiqlandi.\n`;
-            message += `Ishchi: ${request.type === 'edit' ? request.newData.adiSoyadi : request.workerData.adiSoyadi}\n`;
-            message += `⏰ ${new Date().toLocaleString('tr-TR')}`;
-            
-            sendAdminNotification(message); // Bu yerda foydalanuvchiga yuborish kerak
-            
-            renderPendingRequests();
-            updateStats();
-            tg.showAlert('✅ So\'rov tasdiqlandi!');
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        function rejectRequest(requestId) {
-            const index = pendingRequests.findIndex(r => r.id === requestId);
-            if (index === -1) return;
-
-            const request = pendingRequests[index];
-            request.status = 'rejected';
-            pendingRequests.splice(index, 1);
-            localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
-
-            renderPendingRequests();
-            updateStats();
-            tg.showAlert('❌ So\'rov rad etildi!');
-        }
-
-        // ========================================
-        // FOYDALANUVCHILAR FAOLIYATI
-        // ========================================
-        function showUsersModal() {
-            if (!isAdmin) {
-                tg.showAlert('Siz admin emassiz!');
-                return;
-            }
-            document.getElementById('usersModal').classList.add('show');
-            renderUserActivity();
-        }
-
-        function closeUsersModal() {
-            document.getElementById('usersModal').classList.remove('show');
-        }
-
-        function renderUserActivity() {
-            const listDiv = document.getElementById('userActivityList');
-            
-            if (userActivity.length === 0) {
-                listDiv.innerHTML = '<div class="empty">Hali hech qanday faoliyat yo\'q</div>';
-                return;
-            }
-
-            // Oxirgi 50 ta faoliyatni ko'rsatish
-            const recentActivity = userActivity.slice(-50).reverse();
-
-            listDiv.innerHTML = recentActivity.map(log => {
-                const time = new Date(log.time).toLocaleString('tr-TR');
-                const actionText = log.type === 'add' ? '➕ Yangi qo\'shdi' : 
-                                   log.type === 'edit' ? '✏️ O\'zgartirdi' : '🗑️ O\'chirdi';
-                
-                return `
-                <div class="user-log-item">
-                    <div class="user-log-header">
-                        <span class="user-log-name">👤 ${log.userName}</span>
-                        <span class="user-log-time">🕐 ${time}</span>
-                    </div>
-                    <div class="user-log-action">
-                        ${actionText}: <strong>${log.workerName}</strong> (Sicil: ${log.workerSicil})
-                    </div>
-                    ${log.comment ? `<div style="font-size:11px;margin-top:5px;opacity:0.7;">📝 ${log.comment}</div>` : ''}
-                    ${log.approvedBy ? `<div style="font-size:11px;margin-top:5px;color:#27ae60;">✅ Admin tasdiqladi</div>` : ''}
-                </div>`;
-            }).join('');
-        }
-
-        // ========================================
-        // EXCEL EXPORT
+        // EXCEL EXPORT - FileSaver.js bilan
         // ========================================
         function exportToExcel() {
             if (workers.length === 0) {
@@ -1016,8 +620,7 @@
                 'Patent Ödeme Tarihi': formatDate(w.patentOdeme),
                 'Patent Çeki Başlangıç Tarihi': formatDate(w.patentCekiBaslangic),
                 'Patent Çeki Bitiş Tarihi': formatDate(w.patentCekiBitis),
-                'Kalan Gün': calculateDaysRemaining(w.patentCekiBitis) !== null ? calculateDaysRemaining(w.patentCekiBitis) + ' gün' : '-',
-                'O\'zgartirgan': w.changedBy || '-'
+                'Kalan Gün': calculateDaysRemaining(w.patentCekiBitis) !== null ? calculateDaysRemaining(w.patentCekiBitis) + ' gün' : '-'
             }));
 
             const ws = XLSX.utils.json_to_sheet(exportData);
@@ -1026,14 +629,17 @@
 
             const fileName = `Patent_Takip_${new Date().toISOString().split('T')[0]}.xlsx`;
 
+            // FileSaver.js bilan yuklab olish
             const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
             const blob = new Blob([wbout], { 
                 type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
             });
             
+            // FileSaver.js saveAs funksiyasi
             if (typeof saveAs !== 'undefined') {
                 saveAs(blob, fileName);
             } else {
+                // Fallback
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1100,8 +706,6 @@
                         });
                         if (record.sicil && record.adiSoyadi) {
                             record.id = Date.now() + i;
-                            record.changedBy = 'Import';
-                            record.changedTime = new Date().toISOString();
                             importData.push(record);
                         }
                     }
@@ -1127,22 +731,6 @@
                 if (ok) {
                     workers = workers.concat(importData);
                     localStorage.setItem('patent_workers', JSON.stringify(workers));
-                    
-                    // Import faoliyatini yozish
-                    importData.forEach(item => {
-                        userActivity.push({
-                            id: Date.now(),
-                            type: 'add',
-                            userName: 'Import',
-                            userId: currentUser,
-                            workerName: item.adiSoyadi,
-                            workerSicil: item.sicil,
-                            time: new Date().toISOString(),
-                            comment: 'Excel dan import'
-                        });
-                    });
-                    localStorage.setItem('patent_activity', JSON.stringify(userActivity));
-                    
                     updateStats();
                     closeImportModal();
                     showSection('list');
@@ -1154,13 +742,9 @@
         }
 
         // ========================================
-        // SOZLAMALAR (faqat admin)
+        // SOZLAMALAR
         // ========================================
         function showSettingsModal() {
-            if (!isAdmin) {
-                tg.showAlert('Siz admin emassiz!');
-                return;
-            }
             document.getElementById('settingsModal').classList.add('show');
             document.getElementById('botToken').value = BOT_TOKEN;
             document.getElementById('adminChatId').value = ADMIN_CHAT_ID;
@@ -1189,12 +773,11 @@
             if (success) {
                 tg.showAlert('✅ Test xabar yuborildi! Telegram\'ni tekshiring.');
             } else {
-                tg.showAlert(' Xabar yuborilmadi. Token va ID ni tekshiring.');
+                tg.showAlert('❌ Xabar yuborilmadi. Token va ID ni tekshiring.');
             }
         }
 
-        // İlk yükleme
-        checkAdmin();
+        // İlk yükleme - Liste ko'rsatish
         updateStats();
         renderTable();
     </script>
