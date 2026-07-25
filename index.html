@@ -10,60 +10,62 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: var(--tg-theme-bg-color, #0f0f23);
-            color: var(--tg-theme-text-color, #e0e0e0);
+            background: var(--tg-theme-bg-color, #f5f5f5);
+            color: var(--tg-theme-text-color, #333);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             padding: 10px;
             font-size: 14px;
         }
-        h1 { text-align: center; color: var(--tg-theme-link-color, #4fc3f7); margin-bottom: 15px; font-size: 20px; }
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 20px; }
         
         .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
-        .stat-card { background: var(--tg-theme-secondary-bg-color, #1a1a3e); padding: 12px 8px; border-radius: 10px; text-align: center; }
-        .stat-card .number { font-size: 22px; font-weight: bold; color: var(--tg-theme-link-color, #4fc3f7); }
+        .stat-card { background: white; padding: 12px 8px; border-radius: 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .stat-card .number { font-size: 22px; font-weight: bold; color: #3498db; }
         .stat-card .label { font-size: 10px; opacity: 0.7; margin-top: 3px; }
         
         .action-buttons { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; }
-        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; min-width: 80px; font-size: 13px; transition: all 0.3s; }
-        .btn-primary { background: var(--tg-theme-button-color, #4fc3f7); color: var(--tg-theme-button-text-color, #000); }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-warning { background: #e67e22; color: white; }
-        .btn-info { background: #3498db; color: white; }
-        .btn-alert { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; animation: pulse 2s infinite; }
-        .btn-settings { background: #9b59b6; color: white; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; min-width: 80px; font-size: 13px; transition: all 0.3s; color: white; }
+        .btn-primary { background: #3498db; }
+        .btn-success { background: #27ae60; }
+        .btn-warning { background: #e67e22; }
+        .btn-info { background: #5dade2; }
+        .btn-alert { background: #e74c3c; animation: pulse 2s infinite; }
+        .btn-settings { background: #9b59b6; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
         
         .form-section { display: none; }
         .form-section.active { display: block; }
         
-        .section-card { background: var(--tg-theme-secondary-bg-color, #1a1a3e); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .section-card h3 { color: var(--tg-theme-link-color, #4fc3f7); margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid rgba(79,195,247,0.3); padding-bottom: 6px; }
+        .section-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section-card h3 { color: #2c3e50; margin-bottom: 12px; font-size: 15px; border-bottom: 2px solid #3498db; padding-bottom: 6px; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group.full-width { grid-column: 1 / -1; }
-        .form-group label { font-size: 11px; opacity: 0.7; margin-bottom: 4px; }
+        .form-group label { font-size: 11px; opacity: 0.7; margin-bottom: 4px; color: #555; }
         .form-group input, .form-group select, .form-group textarea {
-            padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
-            background: var(--tg-theme-bg-color, #0f0f23); color: var(--tg-theme-text-color, #e0e0e0); font-size: 13px;
+            padding: 10px; border: 1px solid #ddd; border-radius: 8px;
+            background: #f9f9f9; color: #333; font-size: 13px;
         }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--tg-theme-link-color, #4fc3f7); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { 
+            outline: none; border-color: #3498db; background: white;
+        }
         
         .search-bar input {
-            width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px; background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            color: var(--tg-theme-text-color, #e0e0e0); margin-bottom: 15px; font-size: 14px;
+            width: 100%; padding: 12px; border: 1px solid #ddd;
+            border-radius: 8px; background: white;
+            color: #333; margin-bottom: 15px; font-size: 14px;
         }
         
-        .table-container { overflow-x: auto; background: var(--tg-theme-secondary-bg-color, #1a1a3e); border-radius: 12px; }
+        .table-container { overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        thead { background: rgba(79,195,247,0.15); }
-        th { padding: 12px 8px; text-align: left; font-size: 12px; font-weight: 600; color: var(--tg-theme-link-color, #4fc3f7); border-bottom: 2px solid rgba(79,195,247,0.3); white-space: nowrap; }
-        td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
-        tbody tr:hover { background: rgba(79,195,247,0.05); }
+        thead { background: #3498db; }
+        th { padding: 12px 8px; text-align: left; font-size: 12px; font-weight: 600; color: white; border-bottom: 2px solid #2980b9; white-space: nowrap; }
+        td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 13px; color: #333; }
+        tbody tr:hover { background: #f0f8ff; }
         
-        .row-expiring { background: rgba(231, 76, 60, 0.15) !important; border-left: 3px solid #e74c3c; }
-        .row-expired { background: rgba(231, 76, 60, 0.3) !important; border-left: 3px solid #c0392b; }
+        .row-expiring { background: #ffe6e6 !important; border-left: 3px solid #e74c3c; }
+        .row-expired { background: #ffcccc !important; border-left: 3px solid #c0392b; }
         
         .days-badge { font-weight: bold; padding: 4px 8px; border-radius: 6px; font-size: 12px; display: inline-block; }
         .days-critical { background: #e74c3c; color: white; }
@@ -76,10 +78,10 @@
         .empty { text-align: center; padding: 40px; opacity: 0.6; }
         
         .section-divider {
-            background: rgba(79,195,247,0.2);
+            background: #e74c3c;
             padding: 8px 12px;
             font-weight: bold;
-            color: #4fc3f7;
+            color: white;
             font-size: 12px;
         }
         
@@ -89,18 +91,18 @@
         }
         .modal-overlay.show { display: flex; }
         .modal {
-            background: var(--tg-theme-bg-color, #0f0f23); border-radius: 12px; padding: 20px;
+            background: white; border-radius: 12px; padding: 20px;
             max-width: 95%; max-height: 90vh; overflow-y: auto; width: 500px;
         }
-        .modal h2 { color: #4fc3f7; margin-bottom: 15px; }
+        .modal h2 { color: #2c3e50; margin-bottom: 15px; }
         .modal .btn-close { float: right; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; }
         
         .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
         .file-input-wrapper input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
-        .file-input-label { display: block; padding: 15px; background: rgba(79,195,247,0.1); border: 2px dashed #4fc3f7; border-radius: 8px; text-align: center; color: #4fc3f7; font-weight: bold; cursor: pointer; }
+        .file-input-label { display: block; padding: 15px; background: #ecf0f1; border: 2px dashed #3498db; border-radius: 8px; text-align: center; color: #3498db; font-weight: bold; cursor: pointer; }
         
         .settings-info {
-            background: rgba(155, 89, 182, 0.2);
+            background: #f3e5f5;
             border: 1px solid #9b59b6;
             padding: 10px;
             border-radius: 8px;
@@ -108,15 +110,6 @@
             font-size: 12px;
         }
         .settings-info strong { color: #9b59b6; }
-        
-        .change-comment {
-            background: rgba(243, 156, 18, 0.1);
-            border-left: 3px solid #f39c12;
-            padding: 8px;
-            margin: 8px 0;
-            border-radius: 4px;
-            font-size: 12px;
-        }
         
         @media (max-width: 600px) {
             .form-grid { grid-template-columns: 1fr; }
@@ -143,9 +136,9 @@
     </div>
 
     <!-- FORM BÖLÜMÜ -->
-    <div class="form-section active" id="sectionForm">
+    <div class="form-section" id="sectionForm">
         <div class="section-card">
-            <h3>📌 Genel Bilgiler</h3>
+            <h3> Genel Bilgiler</h3>
             <div class="form-grid">
                 <div class="form-group"><label>Sicil No *</label><input type="text" id="sicil"></div>
                 <div class="form-group"><label>Güncel Durumu</label><select id="guncelDurum"><option>Aktif</option><option>Pasif</option></select></div>
@@ -179,15 +172,15 @@
         <div class="section-card">
             <h3> Izoh (Admin uchun)</h3>
             <div class="form-group full-width">
-                <label>Nima o'zgartiryapsiz? (Admin'ga yuboriladi)</label>
-                <textarea id="changeComment" rows="3" placeholder="Masalan: Patent çeki bitiş tarixini 2026-12-01 ga o'zgartirish kerak..."></textarea>
+                <label>Nima o'zgartiryapsiz?</label>
+                <textarea id="changeComment" rows="3" placeholder="Masalan: Patent çeki bitiş tarixini o'zgartirish..."></textarea>
             </div>
         </div>
         <button class="btn btn-primary" onclick="saveWorker()" style="width:100%;">💾 Kaydet</button>
     </div>
 
     <!-- LİSTE BÖLÜMÜ -->
-    <div class="form-section" id="sectionList">
+    <div class="form-section active" id="sectionList">
         <div class="search-bar"><input type="text" id="searchInput" placeholder="🔍 Ara..." oninput="renderTable()"></div>
         <div class="table-container">
             <table>
@@ -210,11 +203,11 @@
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <button class="btn-close" onclick="closeSettingsModal()">×</button>
-            <h2>⚙️ Sozlamalar (Admin Bildirish)</h2>
+            <h2>️ Sozlamalar</h2>
             <div class="settings-info">
                 <strong>📌 Qanday ishlaydi?</strong><br>
                 1. @BotFather'dan bot token oling<br>
-                2. Admin chat ID'ni oling (@userinfobot)<br>
+                2. @userinfobot'dan admin chat ID oling<br>
                 3. Quyidagi maydonlarga kiriting
             </div>
             <div class="form-group" style="margin-bottom:10px;">
@@ -227,9 +220,9 @@
             </div>
             <div class="form-group" style="margin-bottom:15px;">
                 <label>📝 Test xabar yuborish</label>
-                <button class="btn btn-info" onclick="testNotification()" style="width:100%; margin-top:5px;">📤 Test Xabar Yuborish</button>
+                <button class="btn btn-info" onclick="testNotification()" style="width:100%; margin-top:5px;"> Test Xabar Yuborish</button>
             </div>
-            <button class="btn btn-success" onclick="saveSettings()" style="width:100%;"> Saqlash</button>
+            <button class="btn btn-success" onclick="saveSettings()" style="width:100%;">💾 Saqlash</button>
         </div>
     </div>
 
@@ -237,16 +230,16 @@
     <div class="modal-overlay" id="importModal">
         <div class="modal">
             <button class="btn-close" onclick="closeImportModal()">×</button>
-            <h2> Excel'dan Import</h2>
+            <h2>📥 Excel'dan Import</h2>
             <div class="file-input-wrapper">
-                <div class="file-input-label">📁 Excel faylini tanlash uchun bosing</div>
+                <div class="file-input-label"> Excel faylini tanlash uchun bosing</div>
                 <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
             </div>
             <div id="importPreview" style="display:none; margin-top:15px;">
-                <h4 style="color:#4fc3f7; margin:15px 0 10px;">📋 Oldindan ko'rish (<span id="importCount">0</span> ta)</h4>
+                <h4 style="color:#3498db; margin:15px 0 10px;">📋 Oldindan ko'rish (<span id="importCount">0</span> ta)</h4>
                 <div style="display:flex; gap:10px; margin-top:15px;">
                     <button class="btn btn-success" onclick="confirmImport()" style="flex:1;">✅ Import</button>
-                    <button class="btn btn-danger" onclick="closeImportModal()" style="flex:1;">❌ Bekor</button>
+                    <button class="btn btn-delete" onclick="closeImportModal()" style="flex:1;">❌ Bekor</button>
                 </div>
             </div>
         </div>
@@ -370,7 +363,29 @@
             }
         }
 
-        // Izoh bilan saqlash
+        function getFieldLabel(field) {
+            const labels = {
+                'sicil': 'Sicil No', 'guncelDurum': 'Güncel Durumu', 'projeAdi': 'Proje Adı',
+                'adiSoyadi': 'Adı Soyadı', 'santiyeGiris': 'Şantiye Giriş', 'resmiGiris': 'Resmi Giriş',
+                'dogumTarihi': 'Doğum Tarihi', 'innNo': 'INN No', 'patentAlis': 'Patent Alış',
+                'patentBitis': 'Patent Bitiş', 'patentSeri': 'Patent Seri', 'patentNo': 'Patent No',
+                'patentFormSeri': 'Patent Form Seri', 'patentFormNo': 'Patent Form No',
+                'patentOdeme': 'Patent Ödeme', 'patentCekiBaslangic': 'Patent Çeki Başlangıç',
+                'patentCekiBitis': 'Patent Çeki Bitiş'
+            };
+            return labels[field] || field;
+        }
+
+        function findChanges(oldData, newData) {
+            const changes = {};
+            Object.keys(newData).forEach(key => {
+                if (oldData[key] !== newData[key] && key !== 'id') {
+                    changes[key] = { old: oldData[key] || '-', new: newData[key] || '-' };
+                }
+            });
+            return changes;
+        }
+
         function saveWorker() {
             const data = getFormData();
             const comment = document.getElementById('changeComment').value.trim();
@@ -382,34 +397,29 @@
             data.id = Date.now();
             
             if (editIndex >= 0) {
-                // O'ZGARTIRISH - Admin'ga bildirish yuborish
                 const oldData = workers[editIndex];
                 const changes = findChanges(oldData, data);
                 
                 if (Object.keys(changes).length > 0) {
-                    // Admin'ga xabar tayyorlash
-                    let message = `️ <b>O'ZGARTIRISH SO'ROVI</b>\n\n`;
+                    let message = `✏️ <b>O'ZGARTIRISH</b>\n\n`;
                     message += `👤 <b>Ishchi:</b> ${data.adiSoyadi}\n`;
                     message += `🔢 <b>Sicil:</b> ${data.sicil}\n\n`;
-                    message += `📝 <b>Izoh:</b>\n<i>${comment || 'Izoh yo\'q'}</i>\n\n`;
-                    message += ` <b>O'zgarishlar:</b>\n`;
+                    message += ` <b>Izoh:</b>\n<i>${comment || 'Izoh yo\'q'}</i>\n\n`;
+                    message += `📊 <b>O'zgarishlar:</b>\n`;
                     
                     Object.keys(changes).forEach(key => {
                         const change = changes[key];
                         const label = getFieldLabel(key);
-                        message += `• <b>${label}:</b>\n`;
-                        message += `  Eski: ${change.old || '-'}\n`;
-                        message += `  Yangi: ${change.new || '-'}\n`;
+                        message += `• <b>${label}:</b>\n  Eski: ${change.old}\n  Yangi: ${change.new}\n`;
                     });
                     
                     message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
                     
-                    // Admin'ga yuborish
                     sendAdminNotification(message).then(success => {
                         if (success) {
                             tg.showAlert('✅ O\'zgartirish saqlandi va admin\'ga bildirish yuborildi!');
                         } else {
-                            tg.showAlert('⚠️ O\'zgartirish saqlandi, lekin admin\'ga bildirish yuborilmadi. Sozlamalarni tekshiring.');
+                            tg.showAlert('⚠️ O\'zgartirish saqlandi, lekin admin\'ga bildirish yuborilmadi.');
                         }
                     });
                     
@@ -420,7 +430,6 @@
                     return;
                 }
             } else {
-                // YANGI QO'SHISH
                 workers.push(data);
                 
                 let message = `➕ <b>YANGI QO'SHILDI</b>\n\n`;
@@ -428,9 +437,7 @@
                 message += `🔢 <b>Sicil:</b> ${data.sicil}\n`;
                 message += `📋 <b>Proje:</b> ${data.projeAdi || '-'}\n`;
                 message += `📅 <b>Patent Çeki Bitiş:</b> ${formatDate(data.patentCekiBitis)}\n`;
-                if (comment) {
-                    message += `\n📝 <b>Izoh:</b>\n<i>${comment}</i>\n`;
-                }
+                if (comment) message += `\n <b>Izoh:</b>\n<i>${comment}</i>\n`;
                 message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
                 
                 sendAdminNotification(message);
@@ -440,45 +447,8 @@
             localStorage.setItem('patent_workers', JSON.stringify(workers));
             clearForm();
             updateStats();
+            showSection('list');
             tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        // Maydon nomlarini turkchaga o'girish
-        function getFieldLabel(field) {
-            const labels = {
-                'sicil': 'Sicil No',
-                'guncelDurum': 'Güncel Durumu',
-                'projeAdi': 'Proje Adı',
-                'adiSoyadi': 'Adı Soyadı',
-                'santiyeGiris': 'Şantiye Giriş',
-                'resmiGiris': 'Resmi Giriş',
-                'dogumTarihi': 'Doğum Tarihi',
-                'innNo': 'INN No',
-                'patentAlis': 'Patent Alış',
-                'patentBitis': 'Patent Bitiş',
-                'patentSeri': 'Patent Seri',
-                'patentNo': 'Patent No',
-                'patentFormSeri': 'Patent Form Seri',
-                'patentFormNo': 'Patent Form No',
-                'patentOdeme': 'Patent Ödeme',
-                'patentCekiBaslangic': 'Patent Çeki Başlangıç',
-                'patentCekiBitis': 'Patent Çeki Bitiş'
-            };
-            return labels[field] || field;
-        }
-
-        // O'zgarishlarni topish
-        function findChanges(oldData, newData) {
-            const changes = {};
-            Object.keys(newData).forEach(key => {
-                if (oldData[key] !== newData[key] && key !== 'id') {
-                    changes[key] = {
-                        old: oldData[key] || '-',
-                        new: newData[key] || '-'
-                    };
-                }
-            });
-            return changes;
         }
 
         function editWorker(index) {
@@ -497,7 +467,6 @@
                     workers.splice(index, 1);
                     localStorage.setItem('patent_workers', JSON.stringify(workers));
                     
-                    // Admin'ga o'chirilgani haqida xabar
                     let message = `🗑️ <b>O'CHIRILDI</b>\n\n`;
                     message += `👤 <b>Ishchi:</b> ${w.adiSoyadi}\n`;
                     message += `🔢 <b>Sicil:</b> ${w.sicil}\n`;
@@ -514,7 +483,7 @@
             highlightMode = !highlightMode;
             if (highlightMode) {
                 showSection('list');
-                tg.showAlert('⚠️ 10 gün içinde bitenler üstte gösteriliyor!');
+                tg.showAlert('️ 10 gün içinde bitenler üstte gösteriliyor!');
             } else {
                 tg.showAlert('Normal görünüme geçildi');
                 renderTable();
@@ -531,7 +500,6 @@
                 Object.values(w).join(' ').toLowerCase().includes(search)
             );
 
-            // Saralash: 10 kun ichida tugaydiganlar yuqorida
             filtered.sort((a, b) => {
                 const daysA = calculateDaysRemaining(a.patentCekiBitis);
                 const daysB = calculateDaysRemaining(b.patentCekiBitis);
@@ -588,9 +556,9 @@
                     if (currentSection !== lastSection) {
                         lastSection = currentSection;
                         if (currentSection === 'expiring') {
-                            html += `<tr><td colspan="5" class="section-divider">⚠️ 10 GÜN İÇİNDE BİTECEKLER</td></tr>`;
+                            html += `<tr><td colspan="5" class="section-divider">️ 10 GÜN İÇİNDE BİTECEKLER</td></tr>`;
                         } else {
-                            html += `<tr><td colspan="5" class="section-divider">📋 DİĞER KAYITLAR</td></tr>`;
+                            html += `<tr><td colspan="5" class="section-divider"> DİĞER KAYITLAR</td></tr>`;
                         }
                     }
                 }
@@ -601,8 +569,8 @@
                     <td>${formatDate(w.patentCekiBitis)}</td>
                     <td><span class="days-badge ${daysClass}">${daysText}</span></td>
                     <td>
-                        <button class="btn-edit" onclick="editWorker(${realIndex})">✏️</button>
-                        <button class="btn-delete" onclick="deleteWorker(${realIndex})">🗑️</button>
+                        <button class="btn-edit" onclick="editWorker(${realIndex})">️</button>
+                        <button class="btn-delete" onclick="deleteWorker(${realIndex})">️</button>
                     </td>
                 </tr>`;
             });
@@ -765,6 +733,7 @@
                     localStorage.setItem('patent_workers', JSON.stringify(workers));
                     updateStats();
                     closeImportModal();
+                    showSection('list');
                     tg.showAlert(`✅ ${importData.length} ta qator import qilindi!`);
                     tg.HapticFeedback.notificationOccurred('success');
                     importData = [];
@@ -808,8 +777,9 @@
             }
         }
 
-        // İlk yükleme
+        // İlk yükleme - Liste ko'rsatish
         updateStats();
+        renderTable();
     </script>
 </body>
 </html>
