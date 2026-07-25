@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patent Takip Sistemi - Admin Onaylı</title>
+    <title>Patent Takip Sistemi</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: var(--tg-theme-bg-color, #0f0f23);
             color: var(--tg-theme-text-color, #e0e0e0);
@@ -19,425 +16,130 @@
             padding: 10px;
             font-size: 14px;
         }
-        h1 {
-            text-align: center;
-            color: var(--tg-theme-link-color, #4fc3f7);
-            margin-bottom: 15px;
-            font-size: 20px;
+        h1 { text-align: center; color: var(--tg-theme-link-color, #4fc3f7); margin-bottom: 15px; font-size: 20px; }
+        
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .stat-card { background: var(--tg-theme-secondary-bg-color, #1a1a3e); padding: 12px 8px; border-radius: 10px; text-align: center; }
+        .stat-card .number { font-size: 22px; font-weight: bold; color: var(--tg-theme-link-color, #4fc3f7); }
+        .stat-card .label { font-size: 10px; opacity: 0.7; margin-top: 3px; }
+        
+        .action-buttons { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 15px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; min-width: 80px; font-size: 13px; transition: all 0.3s; }
+        .btn-primary { background: var(--tg-theme-button-color, #4fc3f7); color: var(--tg-theme-button-text-color, #000); }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #e67e22; color: white; }
+        .btn-info { background: #3498db; color: white; }
+        .btn-alert { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; animation: pulse 2s infinite; }
+        .btn-settings { background: #9b59b6; color: white; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+        
+        .section-card { background: var(--tg-theme-secondary-bg-color, #1a1a3e); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .section-card h3 { color: var(--tg-theme-link-color, #4fc3f7); margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid rgba(79,195,247,0.3); padding-bottom: 6px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { font-size: 11px; opacity: 0.7; margin-bottom: 4px; }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            background: var(--tg-theme-bg-color, #0f0f23); color: var(--tg-theme-text-color, #e0e0e0); font-size: 13px;
         }
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--tg-theme-link-color, #4fc3f7); }
+        
+        .search-bar input {
+            width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px; background: var(--tg-theme-secondary-bg-color, #1a1a3e);
+            color: var(--tg-theme-text-color, #e0e0e0); margin-bottom: 15px; font-size: 14px;
         }
-        .stat-card {
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            padding: 12px 8px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .stat-card .number {
-            font-size: 22px;
+        
+        .table-container { overflow-x: auto; background: var(--tg-theme-secondary-bg-color, #1a1a3e); border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        thead { background: rgba(79,195,247,0.15); }
+        th { padding: 12px 8px; text-align: left; font-size: 12px; font-weight: 600; color: var(--tg-theme-link-color, #4fc3f7); border-bottom: 2px solid rgba(79,195,247,0.3); white-space: nowrap; }
+        td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; }
+        tbody tr:hover { background: rgba(79,195,247,0.05); }
+        
+        .row-expiring { background: rgba(231, 76, 60, 0.15) !important; border-left: 3px solid #e74c3c; }
+        .row-expired { background: rgba(231, 76, 60, 0.3) !important; border-left: 3px solid #c0392b; }
+        
+        .days-badge { font-weight: bold; padding: 4px 8px; border-radius: 6px; font-size: 12px; display: inline-block; }
+        .days-critical { background: #e74c3c; color: white; }
+        .days-warning { background: #f39c12; color: white; }
+        .days-ok { background: #27ae60; color: white; }
+        
+        .btn-edit { background: #f39c12; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; margin-right: 4px; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        
+        .empty { text-align: center; padding: 40px; opacity: 0.6; }
+        
+        .section-divider {
+            background: rgba(79,195,247,0.2);
+            padding: 8px 12px;
             font-weight: bold;
-            color: var(--tg-theme-link-color, #4fc3f7);
-        }
-        .stat-card .label {
-            font-size: 10px;
-            opacity: 0.7;
-            margin-top: 3px;
-        }
-        .nav-tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .nav-tab {
-            padding: 10px 12px;
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            border: 2px solid transparent;
-            border-radius: 8px;
-            color: var(--tg-theme-text-color, #e0e0e0);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all 0.3s;
-        }
-        .nav-tab.active {
-            background: var(--tg-theme-link-color, #4fc3f7);
-            color: #000;
-            border-color: var(--tg-theme-link-color, #4fc3f7);
-        }
-        .form-section {
-            display: none;
-        }
-        .form-section.active {
-            display: block;
-        }
-        .section-card {
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .section-card h3 {
-            font-size: 16px;
-            color: var(--tg-theme-link-color, #4fc3f7);
-            margin-bottom: 12px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(79,195,247,0.3);
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-        .form-group.full-width {
-            grid-column: 1 / -1;
-        }
-        .form-group label {
-            font-size: 11px;
-            opacity: 0.7;
-            margin-bottom: 4px;
-        }
-        .form-group input,
-        .form-group select {
-            padding: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            background: var(--tg-theme-bg-color, #0f0f23);
-            color: var(--tg-theme-text-color, #e0e0e0);
-            font-size: 13px;
-        }
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--tg-theme-link-color, #4fc3f7);
-        }
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin: 5px;
-        }
-        .btn-primary {
-            background: var(--tg-theme-button-color, #4fc3f7);
-            color: var(--tg-theme-button-text-color, #000);
-            width: 100%;
-        }
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .btn-edit {
-            background: #f39c12;
-            color: white;
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .btn-warning {
-            background: #e67e22;
-            color: white;
-        }
-        .btn-info {
-            background: #3498db;
-            color: white;
-        }
-        .btn-approve {
-            background: #27ae60;
-            color: white;
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .btn-reject {
-            background: #e74c3c;
-            color: white;
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        .search-bar input,
-        .search-bar select {
-            flex: 1;
-            min-width: 150px;
-            padding: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            color: var(--tg-theme-text-color, #e0e0e0);
-            font-size: 14px;
-        }
-        .table-container {
-            overflow-x: auto;
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            border-radius: 12px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 2000px;
-        }
-        thead {
-            background: rgba(79,195,247,0.15);
-            position: sticky;
-            top: 0;
-        }
-        th {
-            padding: 10px 8px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--tg-theme-link-color, #4fc3f7);
-            border-bottom: 2px solid rgba(79,195,247,0.3);
-            white-space: nowrap;
-        }
-        td {
-            padding: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            font-size: 12px;
-            white-space: nowrap;
-        }
-        tbody tr:hover {
-            background: rgba(79,195,247,0.05);
-        }
-        .expiring-soon {
-            background: rgba(231, 76, 60, 0.2) !important;
-            border-left: 3px solid #e74c3c;
-        }
-        .expired {
-            background: rgba(231, 76, 60, 0.4) !important;
-            border-left: 3px solid #c0392b;
-        }
-        .status-badge {
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        .status-active { background: #27ae60; color: white; }
-        .status-inactive { background: #e74c3c; color: white; }
-        .status-pending { background: #f39c12; color: white; }
-        .status-approved { background: #27ae60; color: white; }
-        .empty {
-            text-align: center;
-            padding: 40px;
-            opacity: 0.6;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-        .filter-section {
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .highlight-btn {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            border: 2px solid #e74c3c;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .days-remaining {
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .days-critical {
-            background: #e74c3c;
-            color: white;
-        }
-        .days-warning {
-            background: #f39c12;
-            color: white;
-        }
-        .days-ok {
-            background: #27ae60;
-            color: white;
-        }
-        .admin-badge {
-            background: linear-gradient(135deg, #9b59b6, #8e44ad);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 15px;
-        }
-        .pending-notice {
-            background: rgba(243, 156, 18, 0.2);
-            border: 2px solid #f39c12;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .pending-notice h4 {
-            color: #f39c12;
-            margin-bottom: 5px;
-        }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal-overlay.show {
-            display: flex;
-        }
-        .modal {
-            background: var(--tg-theme-bg-color, #0f0f23);
-            border-radius: 12px;
-            padding: 20px;
-            max-width: 95%;
-            max-height: 90vh;
-            overflow-y: auto;
-            width: 600px;
-        }
-        .modal h2 {
             color: #4fc3f7;
-            margin-bottom: 15px;
-        }
-        .modal .btn-close {
-            float: right;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .pending-item {
-            background: var(--tg-theme-secondary-bg-color, #1a1a3e);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #f39c12;
-        }
-        .pending-item.approved {
-            border-left-color: #27ae60;
-        }
-        .pending-item.rejected {
-            border-left-color: #e74c3c;
-        }
-        .pending-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .pending-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .change-info {
             font-size: 12px;
-            opacity: 0.8;
-            margin-top: 5px;
         }
+        
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--tg-theme-bg-color, #0f0f23); border-radius: 12px; padding: 20px;
+            max-width: 95%; max-height: 90vh; overflow-y: auto; width: 500px;
+        }
+        .modal h2 { color: #4fc3f7; margin-bottom: 15px; }
+        .modal .btn-close { float: right; background: #e74c3c; color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+        
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+        .file-input-wrapper input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        .file-input-label { display: block; padding: 15px; background: rgba(79,195,247,0.1); border: 2px dashed #4fc3f7; border-radius: 8px; text-align: center; color: #4fc3f7; font-weight: bold; cursor: pointer; }
+        
+        .settings-info {
+            background: rgba(155, 89, 182, 0.2);
+            border: 1px solid #9b59b6;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+        .settings-info strong { color: #9b59b6; }
+        
+        .change-comment {
+            background: rgba(243, 156, 18, 0.1);
+            border-left: 3px solid #f39c12;
+            padding: 8px;
+            margin: 8px 0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
         @media (max-width: 600px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-            .stats {
-                grid-template-columns: 1fr;
-            }
+            .form-grid { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr 1fr 1fr; }
         }
     </style>
 </head>
 <body>
     <h1>📋 Patent Takip Sistemi</h1>
-    
-    <!-- Admin Badge -->
-    <div id="adminBadge" style="display:none; text-align:center;">
-        <span class="admin-badge">🔐 ADMIN PANEL</span>
-    </div>
 
-    <!-- Pending Notice -->
-    <div id="pendingNotice" class="pending-notice" style="display:none;">
-        <h4>⏳ Tasdiq kutilmoqda</h4>
-        <p>Sizning o'zgartirish so'rovingiz admin tomonidan ko'rib chiqilmoqda</p>
-    </div>
-
-    <!-- İstatistikler -->
     <div class="stats">
-        <div class="stat-card">
-            <div class="number" id="statTotal">0</div>
-            <div class="label">Toplam</div>
-        </div>
-        <div class="stat-card">
-            <div class="number" id="statExpiring10">0</div>
-            <div class="label">10 Gün İçinde</div>
-        </div>
-        <div class="stat-card">
-            <div class="number" id="statExpired">0</div>
-            <div class="label">Süresi Dolmuş</div>
-        </div>
-        <div class="stat-card" id="pendingStatCard" style="display:none;">
-            <div class="number" id="statPending">0</div>
-            <div class="label">Tasdiq Kutayotgan</div>
-        </div>
+        <div class="stat-card"><div class="number" id="statTotal">0</div><div class="label">Toplam</div></div>
+        <div class="stat-card"><div class="number" id="statExpiring10">0</div><div class="label">10 Gün İçinde</div></div>
+        <div class="stat-card"><div class="number" id="statExpired">0</div><div class="label">Süresi Dolmuş</div></div>
     </div>
 
-    <!-- Aksiyon Butonları -->
     <div class="action-buttons">
-        <button class="btn btn-primary" onclick="showSection('form')" style="flex:1;">➕ Yeni</button>
-        <button class="btn btn-warning" onclick="showSection('list')" style="flex:1;"> Liste</button>
-        <button class="btn btn-success" onclick="exportToExcel()" style="flex:1;">📊 Export</button>
-        <button class="btn btn-info" onclick="showImportModal()" style="flex:1;">📥 Import</button>
-        <button class="btn highlight-btn" onclick="highlightExpiring10Days()" style="flex:1;">⚠️ 10 Gün</button>
-        <button class="btn" id="adminPanelBtn" onclick="showAdminPanel()" style="flex:1; background:#9b59b6; color:white; display:none;">🔐 Admin Panel</button>
-    </div>
-
-    <!-- FİLTRE BÖLÜMÜ -->
-    <div class="filter-section" id="filterSection" style="display:none;">
-        <h3 style="color:#4fc3f7; margin-bottom:10px;">🔍 Filtreler</h3>
-        <div class="search-bar">
-            <input type="text" id="filterName" placeholder="Adı Soyadı ara..." oninput="applyFilters()">
-            <input type="text" id="filterSicil" placeholder="Sicil No ara..." oninput="applyFilters()">
-            <input type="text" id="filterProject" placeholder="Proje Adı ara..." oninput="applyFilters()">
-            <select id="filterStatus" onchange="applyFilters()">
-                <option value="">Tüm Durumlar</option>
-                <option value="Aktif">Aktif</option>
-                <option value="Pasif">Pasif</option>
-            </select>
-        </div>
+        <button class="btn btn-primary" onclick="showSection('form')">➕ Yeni</button>
+        <button class="btn btn-warning" onclick="showSection('list')"> Liste</button>
+        <button class="btn btn-success" onclick="exportToExcel()"> Export</button>
+        <button class="btn btn-info" onclick="showImportModal()">📥 Import</button>
+        <button class="btn btn-alert" onclick="highlightExpiring10Days()">️ 10 Gün</button>
+        <button class="btn btn-settings" onclick="showSettingsModal()">⚙️ Sozlamalar</button>
     </div>
 
     <!-- FORM BÖLÜMÜ -->
@@ -445,122 +147,55 @@
         <div class="section-card">
             <h3>📌 Genel Bilgiler</h3>
             <div class="form-grid">
-                <div class="form-group">
-                    <label>Sicil No *</label>
-                    <input type="text" id="sicil" required>
-                </div>
-                <div class="form-group">
-                    <label>Güncel Durumu</label>
-                    <select id="guncelDurum">
-                        <option value="Aktif">Aktif</option>
-                        <option value="Pasif">Pasif</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Proje Adı</label>
-                    <input type="text" id="projeAdi">
-                </div>
-                <div class="form-group full-width">
-                    <label>Adı Soyadı *</label>
-                    <input type="text" id="adiSoyadi" required>
-                </div>
+                <div class="form-group"><label>Sicil No *</label><input type="text" id="sicil"></div>
+                <div class="form-group"><label>Güncel Durumu</label><select id="guncelDurum"><option>Aktif</option><option>Pasif</option></select></div>
+                <div class="form-group"><label>Proje Adı</label><input type="text" id="projeAdi"></div>
+                <div class="form-group full-width"><label>Adı Soyadı *</label><input type="text" id="adiSoyadi"></div>
             </div>
         </div>
-
         <div class="section-card">
             <h3>📅 Tarih Bilgileri</h3>
             <div class="form-grid">
-                <div class="form-group">
-                    <label>Şantiye Giriş Tarihi</label>
-                    <input type="date" id="santiyeGiris">
-                </div>
-                <div class="form-group">
-                    <label>Resmi Giriş Tarihi</label>
-                    <input type="date" id="resmiGiris">
-                </div>
-                <div class="form-group">
-                    <label>Doğum Tarihi</label>
-                    <input type="date" id="dogumTarihi">
-                </div>
-                <div class="form-group">
-                    <label>INN No</label>
-                    <input type="text" id="innNo">
-                </div>
+                <div class="form-group"><label>Şantiye Giriş Tarihi</label><input type="date" id="santiyeGiris"></div>
+                <div class="form-group"><label>Resmi Giriş Tarihi</label><input type="date" id="resmiGiris"></div>
+                <div class="form-group"><label>Doğum Tarihi</label><input type="date" id="dogumTarihi"></div>
+                <div class="form-group"><label>INN No</label><input type="text" id="innNo"></div>
             </div>
         </div>
-
         <div class="section-card">
             <h3>📜 Patent Bilgileri</h3>
             <div class="form-grid">
-                <div class="form-group">
-                    <label>Patent Alış Tarihi</label>
-                    <input type="date" id="patentAlis">
-                </div>
-                <div class="form-group">
-                    <label>Patent Bitiş Tarihi</label>
-                    <input type="date" id="patentBitis">
-                </div>
-                <div class="form-group">
-                    <label>Patent Seri No</label>
-                    <input type="text" id="patentSeri">
-                </div>
-                <div class="form-group">
-                    <label>Patent No</label>
-                    <input type="text" id="patentNo">
-                </div>
-                <div class="form-group">
-                    <label>Patent Form Seri No</label>
-                    <input type="text" id="patentFormSeri">
-                </div>
-                <div class="form-group">
-                    <label>Patent Form No</label>
-                    <input type="text" id="patentFormNo">
-                </div>
-                <div class="form-group">
-                    <label>Patent Ödeme Tarihi</label>
-                    <input type="date" id="patentOdeme">
-                </div>
-                <div class="form-group">
-                    <label>Patent Çeki Başlangıç Tarihi</label>
-                    <input type="date" id="patentCekiBaslangic">
-                </div>
-                <div class="form-group">
-                    <label>Patent Çeki Bitiş Tarihi *</label>
-                    <input type="date" id="patentCekiBitis" required>
-                </div>
+                <div class="form-group"><label>Patent Alış Tarihi</label><input type="date" id="patentAlis"></div>
+                <div class="form-group"><label>Patent Bitiş Tarihi</label><input type="date" id="patentBitis"></div>
+                <div class="form-group"><label>Patent Seri No</label><input type="text" id="patentSeri"></div>
+                <div class="form-group"><label>Patent No</label><input type="text" id="patentNo"></div>
+                <div class="form-group"><label>Patent Form Seri No</label><input type="text" id="patentFormSeri"></div>
+                <div class="form-group"><label>Patent Form No</label><input type="text" id="patentFormNo"></div>
+                <div class="form-group"><label>Patent Ödeme Tarihi</label><input type="date" id="patentOdeme"></div>
+                <div class="form-group"><label>Patent Çeki Başlangıç Tarihi</label><input type="date" id="patentCekiBaslangic"></div>
+                <div class="form-group"><label>Patent Çeki Bitiş Tarihi *</label><input type="date" id="patentCekiBitis"></div>
             </div>
         </div>
-
-        <button class="btn btn-primary" onclick="saveWorker()">💾 Kaydet</button>
+        <div class="section-card">
+            <h3> Izoh (Admin uchun)</h3>
+            <div class="form-group full-width">
+                <label>Nima o'zgartiryapsiz? (Admin'ga yuboriladi)</label>
+                <textarea id="changeComment" rows="3" placeholder="Masalan: Patent çeki bitiş tarixini 2026-12-01 ga o'zgartirish kerak..."></textarea>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveWorker()" style="width:100%;">💾 Kaydet</button>
     </div>
 
     <!-- LİSTE BÖLÜMÜ -->
     <div class="form-section" id="sectionList">
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder=" Hızlı ara..." oninput="renderTable()">
-        </div>
+        <div class="search-bar"><input type="text" id="searchInput" placeholder="🔍 Ara..." oninput="renderTable()"></div>
         <div class="table-container">
-            <table id="workerTable">
+            <table>
                 <thead>
                     <tr>
-                        <th>Sıra</th>
-                        <th>Sicil</th>
+                        <th>#</th>
                         <th>Adı Soyadı</th>
-                        <th>Proje Adı</th>
-                        <th>Güncel Durum</th>
-                        <th>Şantiye Giriş</th>
-                        <th>Resmi Giriş</th>
-                        <th>Doğum Tarihi</th>
-                        <th>INN No</th>
-                        <th>Patent Alış</th>
-                        <th>Patent Bitiş</th>
-                        <th>Patent Seri</th>
-                        <th>Patent No</th>
-                        <th>Patent Form Seri</th>
-                        <th>Patent Form No</th>
-                        <th>Patent Ödeme</th>
-                        <th>Patent Çeki Başlangıç</th>
-                        <th>Patent Çeki Bitiş</th>
+                        <th>Patent Çeki Bitiş Tarihi</th>
                         <th>Kalan Gün</th>
                         <th>İşlem</th>
                     </tr>
@@ -571,14 +206,30 @@
         <div class="empty" id="emptyMessage">Henüz kayıt yok</div>
     </div>
 
-    <!-- ADMIN PANEL MODAL -->
-    <div class="modal-overlay" id="adminModal">
+    <!-- SOZLAMALAR MODAL -->
+    <div class="modal-overlay" id="settingsModal">
         <div class="modal">
-            <button class="btn-close" onclick="closeAdminPanel()">×</button>
-            <h2>🔐 Admin Panel - Tasdiq So'rovlari</h2>
-            <div id="pendingRequestsList">
-                <div class="empty">Tasdiq kutilayotgan so'rovlar yo'q</div>
+            <button class="btn-close" onclick="closeSettingsModal()">×</button>
+            <h2>⚙️ Sozlamalar (Admin Bildirish)</h2>
+            <div class="settings-info">
+                <strong>📌 Qanday ishlaydi?</strong><br>
+                1. @BotFather'dan bot token oling<br>
+                2. Admin chat ID'ni oling (@userinfobot)<br>
+                3. Quyidagi maydonlarga kiriting
             </div>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>🤖 Bot Token</label>
+                <input type="text" id="botToken" placeholder="123456:ABC-DEF...">
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label>👤 Admin Chat ID</label>
+                <input type="text" id="adminChatId" placeholder="123456789">
+            </div>
+            <div class="form-group" style="margin-bottom:15px;">
+                <label>📝 Test xabar yuborish</label>
+                <button class="btn btn-info" onclick="testNotification()" style="width:100%; margin-top:5px;">📤 Test Xabar Yuborish</button>
+            </div>
+            <button class="btn btn-success" onclick="saveSettings()" style="width:100%;"> Saqlash</button>
         </div>
     </div>
 
@@ -587,63 +238,34 @@
         <div class="modal">
             <button class="btn-close" onclick="closeImportModal()">×</button>
             <h2> Excel'dan Import</h2>
-            <p style="margin-bottom:15px; opacity:0.7; font-size:13px;">
-                Excel faylini tanlang. Fayl quyidagi ustunlarni o'z ichiga olishi kerak
-            </p>
-            
-            <div class="file-input-wrapper" style="position:relative; overflow:hidden; display:inline-block; width:100%;">
-                <div style="display:block; padding:15px; background:rgba(79,195,247,0.1); border:2px dashed #4fc3f7; border-radius:8px; text-align:center; color:#4fc3f7; font-weight:bold; cursor:pointer;">
-                    📁 Excel faylini tanlash uchun bosing
-                </div>
-                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+            <div class="file-input-wrapper">
+                <div class="file-input-label">📁 Excel faylini tanlash uchun bosing</div>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
             </div>
-
-            <div id="importPreview" style="display:none; margin-top:15px; max-height:300px; overflow-y:auto;">
-                <h4 style="color:#4fc3f7; margin:15px 0 10px;">📋 Oldindan ko'rish (<span id="importCount">0</span> ta qator)</h4>
-                <div style="overflow-x:auto;">
-                    <table id="previewTable" style="min-width:auto; font-size:11px;">
-                        <thead id="previewHead"></thead>
-                        <tbody id="previewBody"></tbody>
-                    </table>
-                </div>
+            <div id="importPreview" style="display:none; margin-top:15px;">
+                <h4 style="color:#4fc3f7; margin:15px 0 10px;">📋 Oldindan ko'rish (<span id="importCount">0</span> ta)</h4>
                 <div style="display:flex; gap:10px; margin-top:15px;">
-                    <button class="btn btn-success" onclick="confirmImport()" style="flex:1;">✅ Import Qilish</button>
-                    <button class="btn btn-danger" onclick="closeImportModal()" style="flex:1;"> Bekor Qilish</button>
+                    <button class="btn btn-success" onclick="confirmImport()" style="flex:1;">✅ Import</button>
+                    <button class="btn btn-danger" onclick="closeImportModal()" style="flex:1;">❌ Bekor</button>
                 </div>
             </div>
-
-            <div id="importResult" style="display:none; margin-top:15px; padding:15px; border-radius:8px;"></div>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
-        // Ma'lumotlar
         let workers = JSON.parse(localStorage.getItem('patent_workers') || '[]');
-        let pendingRequests = JSON.parse(localStorage.getItem('patent_pending') || '[]');
         let editIndex = -1;
         let highlightMode = false;
         let importData = [];
-        let isAdmin = false;
-        let currentUser = tg.initDataUnsafe?.user?.id || 'unknown';
 
-        // Admin ID (o'zgartiring!)
-        const ADMIN_ID = 123456789; // Telegram user ID ingizni kiriting
+        // Sozlamalarni yuklash
+        let BOT_TOKEN = localStorage.getItem('bot_token') || '';
+        let ADMIN_CHAT_ID = localStorage.getItem('admin_chat_id') || '';
 
-        // Admin ekanligini tekshirish
-        function checkAdmin() {
-            // Telegram user ID orqali tekshirish
-            if (currentUser === ADMIN_ID || currentUser === 'unknown') {
-                isAdmin = true;
-                document.getElementById('adminBadge').style.display = 'block';
-                document.getElementById('adminPanelBtn').style.display = 'block';
-                document.getElementById('pendingStatCard').style.display = 'block';
-            }
-        }
-
-        // Ustun nomlarini xaritalash
         const columnMapping = {
             'sicil no': 'sicil', 'sicil': 'sicil',
             'güncel durumu': 'guncelDurum', 'guncel durumu': 'guncelDurum', 'durum': 'guncelDurum',
@@ -664,7 +286,6 @@
             'patent çeki bitiş tarihi': 'patentCekiBitis', 'patent ceki bitis tarihi': 'patentCekiBitis'
         };
 
-        // Tarih parse
         function parseDate(value) {
             if (!value) return '';
             if (typeof value === 'number') {
@@ -684,18 +305,15 @@
             return str;
         }
 
-        // Kunlarni hisoblash
         function calculateDaysRemaining(dateStr) {
             if (!dateStr) return null;
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const targetDate = new Date(dateStr);
-            const diffTime = targetDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays;
+            if (isNaN(targetDate.getTime())) return null;
+            return Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
         }
 
-        // Tarih format
         function formatDate(dateStr) {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
@@ -703,289 +321,229 @@
             return date.toLocaleDateString('tr-TR');
         }
 
-        // Bo'lim o'zgartirish
         function showSection(section) {
             document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
             if (section === 'form') {
                 document.getElementById('sectionForm').classList.add('active');
-                document.getElementById('filterSection').style.display = 'none';
             } else {
                 document.getElementById('sectionList').classList.add('active');
-                document.getElementById('filterSection').style.display = 'block';
                 renderTable();
             }
         }
 
-        // Form ma'lumotlarini olish
         function getFormData() {
-            const fields = [
-                'sicil', 'guncelDurum', 'projeAdi', 'adiSoyadi',
-                'santiyeGiris', 'resmiGiris', 'dogumTarihi', 'innNo',
-                'patentAlis', 'patentBitis', 'patentSeri', 'patentNo',
-                'patentFormSeri', 'patentFormNo', 'patentOdeme',
-                'patentCekiBaslangic', 'patentCekiBitis'
-            ];
+            const fields = ['sicil','guncelDurum','projeAdi','adiSoyadi','santiyeGiris','resmiGiris','dogumTarihi','innNo','patentAlis','patentBitis','patentSeri','patentNo','patentFormSeri','patentFormNo','patentOdeme','patentCekiBaslangic','patentCekiBitis'];
             const data = {};
-            fields.forEach(f => {
-                const el = document.getElementById(f);
-                data[f] = el ? el.value : '';
-            });
+            fields.forEach(f => { const el = document.getElementById(f); data[f] = el ? el.value : ''; });
             return data;
         }
 
-        // Formni tozalash
         function clearForm() {
-            document.querySelectorAll('#sectionForm input, #sectionForm select').forEach(el => {
-                if (el.type !== 'button') el.value = '';
-            });
+            document.querySelectorAll('#sectionForm input, #sectionForm select, #sectionForm textarea').forEach(el => { if (el.type !== 'button') el.value = ''; });
             editIndex = -1;
         }
 
-        // Saqlash (Admin tasdiq bilan)
+        // ========================================
+        // ADMIN'GA BILDIRISH YUBORISH
+        // ========================================
+        async function sendAdminNotification(message) {
+            if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
+                console.log('Bot token yoki admin ID yo\'q!');
+                return false;
+            }
+            try {
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        chat_id: ADMIN_CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML'
+                    })
+                });
+                const result = await response.json();
+                return result.ok;
+            } catch (error) {
+                console.error('Xabar yuborishda xato:', error);
+                return false;
+            }
+        }
+
+        // Izoh bilan saqlash
         function saveWorker() {
             const data = getFormData();
-
+            const comment = document.getElementById('changeComment').value.trim();
+            
             if (!data.sicil || !data.adiSoyadi || !data.patentCekiBitis) {
-                tg.showAlert('Lütfen Sicil No, Adı Soyadı ve Patent Çeki Bitiş Tarihi alanlarını doldurun!');
+                tg.showAlert('Sicil No, Adı Soyadı ve Patent Çeki Bitiş Tarihi zorunludur!');
                 return;
             }
-
             data.id = Date.now();
-            data.kayitTarihi = new Date().toLocaleDateString('tr-TR');
-            data.requestedBy = currentUser;
-            data.requestTime = new Date().toISOString();
-
+            
             if (editIndex >= 0) {
-                // O'zgartirish so'rovi yaratish
+                // O'ZGARTIRISH - Admin'ga bildirish yuborish
                 const oldData = workers[editIndex];
                 const changes = findChanges(oldData, data);
                 
                 if (Object.keys(changes).length > 0) {
-                    const request = {
-                        id: Date.now(),
-                        type: 'edit',
-                        index: editIndex,
-                        oldData: oldData,
-                        newData: data,
-                        changes: changes,
-                        requestedBy: currentUser,
-                        requestTime: new Date().toISOString(),
-                        status: 'pending'
-                    };
+                    // Admin'ga xabar tayyorlash
+                    let message = `️ <b>O'ZGARTIRISH SO'ROVI</b>\n\n`;
+                    message += `👤 <b>Ishchi:</b> ${data.adiSoyadi}\n`;
+                    message += `🔢 <b>Sicil:</b> ${data.sicil}\n\n`;
+                    message += `📝 <b>Izoh:</b>\n<i>${comment || 'Izoh yo\'q'}</i>\n\n`;
+                    message += ` <b>O'zgarishlar:</b>\n`;
                     
-                    pendingRequests.push(request);
-                    localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
+                    Object.keys(changes).forEach(key => {
+                        const change = changes[key];
+                        const label = getFieldLabel(key);
+                        message += `• <b>${label}:</b>\n`;
+                        message += `  Eski: ${change.old || '-'}\n`;
+                        message += `  Yangi: ${change.new || '-'}\n`;
+                    });
                     
-                    // Admin'ga xabar yuborish (simulyatsiya)
-                    notifyAdmin('edit', data);
+                    message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
                     
-                    tg.showAlert('✅ O\'zgartirish so\'rovi yuborildi! Admin tasdiqini kuting.');
-                    tg.HapticFeedback.notificationOccurred('success');
+                    // Admin'ga yuborish
+                    sendAdminNotification(message).then(success => {
+                        if (success) {
+                            tg.showAlert('✅ O\'zgartirish saqlandi va admin\'ga bildirish yuborildi!');
+                        } else {
+                            tg.showAlert('⚠️ O\'zgartirish saqlandi, lekin admin\'ga bildirish yuborilmadi. Sozlamalarni tekshiring.');
+                        }
+                    });
+                    
+                    workers[editIndex] = data;
+                    editIndex = -1;
+                } else {
+                    tg.showAlert('Hech qanday o\'zgarish yo\'q!');
+                    return;
                 }
             } else {
-                // Yangi qo'shish - avtomatik tasdiqlanadi
+                // YANGI QO'SHISH
                 workers.push(data);
-                localStorage.setItem('patent_workers', JSON.stringify(workers));
-                tg.showAlert('✅ Yangi qo\'shildi!');
-                tg.HapticFeedback.notificationOccurred('success');
+                
+                let message = `➕ <b>YANGI QO'SHILDI</b>\n\n`;
+                message += `👤 <b>Ishchi:</b> ${data.adiSoyadi}\n`;
+                message += `🔢 <b>Sicil:</b> ${data.sicil}\n`;
+                message += `📋 <b>Proje:</b> ${data.projeAdi || '-'}\n`;
+                message += `📅 <b>Patent Çeki Bitiş:</b> ${formatDate(data.patentCekiBitis)}\n`;
+                if (comment) {
+                    message += `\n📝 <b>Izoh:</b>\n<i>${comment}</i>\n`;
+                }
+                message += `\n⏰ ${new Date().toLocaleString('tr-TR')}`;
+                
+                sendAdminNotification(message);
+                tg.showAlert('✅ Yangi qo\'shildi va admin\'ga bildirish yuborildi!');
             }
-
+            
+            localStorage.setItem('patent_workers', JSON.stringify(workers));
             clearForm();
             updateStats();
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        // Maydon nomlarini turkchaga o'girish
+        function getFieldLabel(field) {
+            const labels = {
+                'sicil': 'Sicil No',
+                'guncelDurum': 'Güncel Durumu',
+                'projeAdi': 'Proje Adı',
+                'adiSoyadi': 'Adı Soyadı',
+                'santiyeGiris': 'Şantiye Giriş',
+                'resmiGiris': 'Resmi Giriş',
+                'dogumTarihi': 'Doğum Tarihi',
+                'innNo': 'INN No',
+                'patentAlis': 'Patent Alış',
+                'patentBitis': 'Patent Bitiş',
+                'patentSeri': 'Patent Seri',
+                'patentNo': 'Patent No',
+                'patentFormSeri': 'Patent Form Seri',
+                'patentFormNo': 'Patent Form No',
+                'patentOdeme': 'Patent Ödeme',
+                'patentCekiBaslangic': 'Patent Çeki Başlangıç',
+                'patentCekiBitis': 'Patent Çeki Bitiş'
+            };
+            return labels[field] || field;
         }
 
         // O'zgarishlarni topish
         function findChanges(oldData, newData) {
             const changes = {};
             Object.keys(newData).forEach(key => {
-                if (oldData[key] !== newData[key]) {
+                if (oldData[key] !== newData[key] && key !== 'id') {
                     changes[key] = {
-                        old: oldData[key],
-                        new: newData[key]
+                        old: oldData[key] || '-',
+                        new: newData[key] || '-'
                     };
                 }
             });
             return changes;
         }
 
-        // Admin'ga xabar
-        function notifyAdmin(type, data) {
-            // Bu yerda Telegram bot orqali admin'ga xabar yuborish mumkin
-            console.log(`Admin'ga xabar: ${type} - ${data.adiSoyadi}`);
-        }
-
-        // Admin panel ko'rsatish
-        function showAdminPanel() {
-            if (!isAdmin) {
-                tg.showAlert('Siz admin emassiz!');
-                return;
-            }
-            
-            document.getElementById('adminModal').classList.add('show');
-            renderPendingRequests();
-        }
-
-        // Admin panel yopish
-        function closeAdminPanel() {
-            document.getElementById('adminModal').classList.remove('show');
-        }
-
-        // Tasdiq so'rovlarini ko'rsatish
-        function renderPendingRequests() {
-            const listDiv = document.getElementById('pendingRequestsList');
-            
-            if (pendingRequests.length === 0) {
-                listDiv.innerHTML = '<div class="empty">Tasdiq kutilayotgan so\'rovlar yo\'q</div>';
-                return;
-            }
-
-            const pending = pendingRequests.filter(r => r.status === 'pending');
-            
-            if (pending.length === 0) {
-                listDiv.innerHTML = '<div class="empty">Tasdiq kutilayotgan so\'rovlar yo\'q</div>';
-                return;
-            }
-
-            listDiv.innerHTML = pending.map(req => {
-                const userName = req.requestedBy || 'Noma\'lum';
-                const time = new Date(req.requestTime).toLocaleString('tr-TR');
-                
-                let changesHtml = '';
-                Object.keys(req.changes).forEach(key => {
-                    const change = req.changes[key];
-                    changesHtml += `<div class="change-info">
-                        <strong>${key}:</strong> ${change.old || '-'} → <strong style="color:#27ae60">${change.new || '-'}</strong>
-                    </div>`;
-                });
-
-                return `
-                <div class="pending-item">
-                    <div class="pending-header">
-                        <strong>${req.type === 'edit' ? '✏️ O\'zgartirish' : '➕ Yangi'}</strong>
-                        <span style="font-size:11px; opacity:0.7">${time}</span>
-                    </div>
-                    <div style="margin:10px 0;">
-                        <strong>${req.newData.adiSoyadi}</strong> - Sicil: ${req.newData.sicil}
-                    </div>
-                    ${changesHtml}
-                    <div class="pending-actions">
-                        <button class="btn btn-approve" onclick="approveRequest(${req.id})">✅ Tasdiqlash</button>
-                        <button class="btn btn-reject" onclick="rejectRequest(${req.id})">❌ Rad etish</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        // So'rovni tasdiqlash
-        function approveRequest(requestId) {
-            const index = pendingRequests.findIndex(r => r.id === requestId);
-            if (index === -1) return;
-
-            const request = pendingRequests[index];
-            
-            if (request.type === 'edit') {
-                workers[request.index] = request.newData;
-                localStorage.setItem('patent_workers', JSON.stringify(workers));
-            }
-
-            request.status = 'approved';
-            pendingRequests.splice(index, 1);
-            localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
-
-            renderPendingRequests();
-            updateStats();
-            tg.showAlert('✅ So\'rov tasdiqlandi!');
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        // So'rovni rad etish
-        function rejectRequest(requestId) {
-            const index = pendingRequests.findIndex(r => r.id === requestId);
-            if (index === -1) return;
-
-            pendingRequests[index].status = 'rejected';
-            pendingRequests.splice(index, 1);
-            localStorage.setItem('patent_pending', JSON.stringify(pendingRequests));
-
-            renderPendingRequests();
-            updateStats();
-            tg.showAlert('❌ So\'rov rad etildi!');
-        }
-
-        // O'zgartirish
         function editWorker(index) {
             const w = workers[index];
             editIndex = index;
-
-            Object.keys(w).forEach(key => {
-                const el = document.getElementById(key);
-                if (el) el.value = w[key] || '';
-            });
-
+            Object.keys(w).forEach(key => { const el = document.getElementById(key); if (el) el.value = w[key] || ''; });
+            document.getElementById('changeComment').value = '';
             showSection('form');
             window.scrollTo(0, 0);
-            tg.HapticFeedback.impactOccurred('light');
         }
 
-        // O'chirish
         function deleteWorker(index) {
-            tg.showConfirm('Bu kaydı silmek istediğinizden emin misiniz?', (ok) => {
+            tg.showConfirm('Silmek istediğinize emin misiniz?', (ok) => {
                 if (ok) {
+                    const w = workers[index];
                     workers.splice(index, 1);
                     localStorage.setItem('patent_workers', JSON.stringify(workers));
+                    
+                    // Admin'ga o'chirilgani haqida xabar
+                    let message = `🗑️ <b>O'CHIRILDI</b>\n\n`;
+                    message += `👤 <b>Ishchi:</b> ${w.adiSoyadi}\n`;
+                    message += `🔢 <b>Sicil:</b> ${w.sicil}\n`;
+                    message += `⏰ ${new Date().toLocaleString('tr-TR')}`;
+                    sendAdminNotification(message);
+                    
                     renderTable();
                     updateStats();
-                    tg.HapticFeedback.notificationOccurred('error');
                 }
             });
         }
 
-        // 10 gün
         function highlightExpiring10Days() {
             highlightMode = !highlightMode;
-            renderTable();
             if (highlightMode) {
-                tg.showAlert('⚠️ 10 gün içinde biten patentler kırmızı ile vurgulanıyor!');
+                showSection('list');
+                tg.showAlert('⚠️ 10 gün içinde bitenler üstte gösteriliyor!');
             } else {
                 tg.showAlert('Normal görünüme geçildi');
+                renderTable();
             }
         }
 
-        // Filtre
-        function applyFilters() {
-            renderTable();
-        }
-
-        // Tablo
         function renderTable() {
             const search = document.getElementById('searchInput').value.toLowerCase();
-            const filterName = document.getElementById('filterName').value.toLowerCase();
-            const filterSicil = document.getElementById('filterSicil').value.toLowerCase();
-            const filterProject = document.getElementById('filterProject').value.toLowerCase();
-            const filterStatus = document.getElementById('filterStatus').value;
-
             const tbody = document.getElementById('workerListBody');
             const emptyMsg = document.getElementById('emptyMessage');
-            const table = document.getElementById('workerTable');
+            const table = tbody.closest('table');
 
-            let filtered = workers.filter(w => {
-                const matchesSearch = Object.values(w).join(' ').toLowerCase().includes(search);
-                const matchesName = !filterName || (w.adiSoyadi || '').toLowerCase().includes(filterName);
-                const matchesSicil = !filterSicil || (w.sicil || '').toLowerCase().includes(filterSicil);
-                const matchesProject = !filterProject || (w.projeAdi || '').toLowerCase().includes(filterProject);
-                const matchesStatus = !filterStatus || w.guncelDurum === filterStatus;
-                return matchesSearch && matchesName && matchesSicil && matchesProject && matchesStatus;
+            let filtered = workers.filter(w => 
+                Object.values(w).join(' ').toLowerCase().includes(search)
+            );
+
+            // Saralash: 10 kun ichida tugaydiganlar yuqorida
+            filtered.sort((a, b) => {
+                const daysA = calculateDaysRemaining(a.patentCekiBitis);
+                const daysB = calculateDaysRemaining(b.patentCekiBitis);
+                const aCritical = daysA !== null && daysA <= 10;
+                const bCritical = daysB !== null && daysB <= 10;
+                if (aCritical && !bCritical) return -1;
+                if (!aCritical && bCritical) return 1;
+                if (daysA !== null && daysB !== null) return daysA - daysB;
+                if (daysA !== null) return -1;
+                if (daysB !== null) return 1;
+                return 0;
             });
-
-            if (highlightMode) {
-                filtered.sort((a, b) => {
-                    const daysA = calculateDaysRemaining(a.patentCekiBitis);
-                    const daysB = calculateDaysRemaining(b.patentCekiBitis);
-                    if (daysA !== null && daysA <= 10) return -1;
-                    if (daysB !== null && daysB <= 10) return 1;
-                    return 0;
-                });
-            }
 
             if (filtered.length === 0) {
                 tbody.innerHTML = '';
@@ -997,63 +555,64 @@
             emptyMsg.style.display = 'none';
             table.style.display = 'table';
 
-            tbody.innerHTML = filtered.map((w, i) => {
-                const realIndex = workers.indexOf(w);
-                const daysRemaining = calculateDaysRemaining(w.patentCekiBitis);
-                let daysClass = 'days-ok';
-                let rowClass = '';
+            let html = '';
+            let lastSection = null;
 
-                if (daysRemaining !== null) {
-                    if (daysRemaining < 0) {
+            filtered.forEach((w, i) => {
+                const realIndex = workers.indexOf(w);
+                const days = calculateDaysRemaining(w.patentCekiBitis);
+                
+                let rowClass = '';
+                let daysClass = 'days-ok';
+                let daysText = '-';
+
+                if (days !== null) {
+                    if (days < 0) {
                         daysClass = 'days-critical';
-                        rowClass = 'expired';
-                    } else if (daysRemaining <= 10) {
+                        rowClass = 'row-expired';
+                        daysText = `${Math.abs(days)} gün önce`;
+                    } else if (days <= 10) {
                         daysClass = 'days-critical';
-                        if (highlightMode) rowClass = 'expiring-soon';
-                    } else if (daysRemaining <= 30) {
+                        rowClass = 'row-expiring';
+                        daysText = `${days} gün`;
+                    } else if (days <= 30) {
                         daysClass = 'days-warning';
+                        daysText = `${days} gün`;
+                    } else {
+                        daysText = `${days} gün`;
                     }
                 }
 
-                const daysText = daysRemaining !== null 
-                    ? (daysRemaining < 0 ? `${Math.abs(daysRemaining)} gün önce` : `${daysRemaining} gün`)
-                    : '-';
+                if (highlightMode) {
+                    const currentSection = days !== null && days <= 10 ? 'expiring' : 'others';
+                    if (currentSection !== lastSection) {
+                        lastSection = currentSection;
+                        if (currentSection === 'expiring') {
+                            html += `<tr><td colspan="5" class="section-divider">⚠️ 10 GÜN İÇİNDE BİTECEKLER</td></tr>`;
+                        } else {
+                            html += `<tr><td colspan="5" class="section-divider">📋 DİĞER KAYITLAR</td></tr>`;
+                        }
+                    }
+                }
 
-                return `<tr class="${rowClass}">
+                html += `<tr class="${rowClass}">
                     <td>${i + 1}</td>
-                    <td>${w.sicil || ''}</td>
                     <td><strong>${w.adiSoyadi || ''}</strong></td>
-                    <td>${w.projeAdi || ''}</td>
-                    <td><span class="status-badge ${w.guncelDurum === 'Aktif' ? 'status-active' : 'status-inactive'}">${w.guncelDurum || ''}</span></td>
-                    <td>${formatDate(w.santiyeGiris)}</td>
-                    <td>${formatDate(w.resmiGiris)}</td>
-                    <td>${formatDate(w.dogumTarihi)}</td>
-                    <td>${w.innNo || ''}</td>
-                    <td>${formatDate(w.patentAlis)}</td>
-                    <td>${formatDate(w.patentBitis)}</td>
-                    <td>${w.patentSeri || ''}</td>
-                    <td>${w.patentNo || ''}</td>
-                    <td>${w.patentFormSeri || ''}</td>
-                    <td>${w.patentFormNo || ''}</td>
-                    <td>${formatDate(w.patentOdeme)}</td>
-                    <td>${formatDate(w.patentCekiBaslangic)}</td>
                     <td>${formatDate(w.patentCekiBitis)}</td>
-                    <td><span class="days-remaining ${daysClass}">${daysText}</span></td>
+                    <td><span class="days-badge ${daysClass}">${daysText}</span></td>
                     <td>
                         <button class="btn-edit" onclick="editWorker(${realIndex})">✏️</button>
-                        <button class="btn-danger" onclick="deleteWorker(${realIndex})">🗑️</button>
+                        <button class="btn-delete" onclick="deleteWorker(${realIndex})">🗑️</button>
                     </td>
                 </tr>`;
-            }).join('');
+            });
+
+            tbody.innerHTML = html;
         }
 
-        // İstatistik
         function updateStats() {
-            const total = workers.length;
-            let expiring10 = 0;
-            let expired = 0;
-            let pending = pendingRequests.filter(r => r.status === 'pending').length;
-
+            document.getElementById('statTotal').textContent = workers.length;
+            let expiring10 = 0, expired = 0;
             workers.forEach(w => {
                 const days = calculateDaysRemaining(w.patentCekiBitis);
                 if (days !== null) {
@@ -1061,22 +620,21 @@
                     else if (days <= 10) expiring10++;
                 }
             });
-
-            document.getElementById('statTotal').textContent = total;
             document.getElementById('statExpiring10').textContent = expiring10;
             document.getElementById('statExpired').textContent = expired;
-            document.getElementById('statPending').textContent = pending;
         }
 
-        // Export
+        // ========================================
+        // EXCEL EXPORT - FileSaver.js bilan
+        // ========================================
         function exportToExcel() {
             if (workers.length === 0) {
                 tg.showAlert('Dışa aktarılacak veri yok!');
                 return;
             }
 
-            const exportData = workers.map((w, index) => ({
-                'Sıra': index + 1,
+            const exportData = workers.map((w, i) => ({
+                'Sıra': i + 1,
                 'Sicil No': w.sicil,
                 'Güncel Durumu': w.guncelDurum,
                 'Proje Adı': w.projeAdi,
@@ -1102,17 +660,38 @@
             XLSX.utils.book_append_sheet(wb, ws, 'Patent Takip');
 
             const fileName = `Patent_Takip_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
 
-            tg.showAlert(`✅ Excel dosyası indirildi: ${fileName}`);
+            // FileSaver.js bilan yuklab olish
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { 
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+            });
+            
+            // FileSaver.js saveAs funksiyasi
+            if (typeof saveAs !== 'undefined') {
+                saveAs(blob, fileName);
+            } else {
+                // Fallback
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            tg.showAlert(`✅ Excel fayli yuklandi: ${fileName}`);
             tg.HapticFeedback.notificationOccurred('success');
         }
 
-        // Import
+        // ========================================
+        // IMPORT
+        // ========================================
         function showImportModal() {
             document.getElementById('importModal').classList.add('show');
             document.getElementById('importPreview').style.display = 'none';
-            document.getElementById('importResult').style.display = 'none';
             document.getElementById('excelFile').value = '';
             importData = [];
         }
@@ -1140,35 +719,25 @@
 
                     const headers = jsonData[0].map(h => String(h).toLowerCase().trim());
                     const columnMap = {};
-                    
                     headers.forEach((header, index) => {
-                        if (columnMapping[header]) {
-                            columnMap[index] = columnMapping[header];
-                        }
+                        if (columnMapping[header]) columnMap[index] = columnMapping[header];
                     });
 
                     importData = [];
                     for (let i = 1; i < jsonData.length; i++) {
                         const row = jsonData[i];
                         if (!row || row.length === 0) continue;
-
                         const record = {};
                         Object.keys(columnMap).forEach(colIndex => {
                             const fieldName = columnMap[colIndex];
                             let value = row[colIndex];
-                            
-                            if (['santiyeGiris', 'resmiGiris', 'dogumTarihi', 'patentAlis', 
-                                 'patentBitis', 'patentOdeme', 'patentCekiBaslangic', 'patentCekiBitis']
-                                .includes(fieldName)) {
+                            if (['santiyeGiris','resmiGiris','dogumTarihi','patentAlis','patentBitis','patentOdeme','patentCekiBaslangic','patentCekiBitis'].includes(fieldName)) {
                                 value = parseDate(value);
                             }
-                            
                             record[fieldName] = value ? String(value).trim() : '';
                         });
-
                         if (record.sicil && record.adiSoyadi) {
                             record.id = Date.now() + i;
-                            record.kayitTarihi = new Date().toLocaleDateString('tr-TR');
                             importData.push(record);
                         }
                     }
@@ -1178,84 +747,69 @@
                         return;
                     }
 
-                    showImportPreview(headers, importData);
+                    document.getElementById('importCount').textContent = importData.length;
+                    document.getElementById('importPreview').style.display = 'block';
 
                 } catch (error) {
-                    console.error('Excel o\'qish xatosi:', error);
                     tg.showAlert('Excel faylini o\'qishda xatolik!');
                 }
             };
             reader.readAsArrayBuffer(file);
         }
 
-        function showImportPreview(headers, data) {
-            const previewDiv = document.getElementById('importPreview');
-            const previewHead = document.getElementById('previewHead');
-            const previewBody = document.getElementById('previewBody');
-            const importCount = document.getElementById('importCount');
-
-            importCount.textContent = data.length;
-
-            const headerRow = document.createElement('tr');
-            headers.forEach(h => {
-                const th = document.createElement('th');
-                th.textContent = h;
-                headerRow.appendChild(th);
-            });
-            previewHead.appendChild(headerRow);
-
-            const previewData = data.slice(0, 5);
-            previewData.forEach(row => {
-                const tr = document.createElement('tr');
-                headers.forEach((h, index) => {
-                    const td = document.createElement('td');
-                    const fieldName = columnMapping[h.toLowerCase().trim()];
-                    td.textContent = fieldName ? (row[fieldName] || '-') : (row[h] || '-');
-                    tr.appendChild(td);
-                });
-                previewBody.appendChild(tr);
-            });
-
-            if (data.length > 5) {
-                const tr = document.createElement('tr');
-                const td = document.createElement('td');
-                td.colSpan = headers.length;
-                td.textContent = `... va yana ${data.length - 5} ta qator`;
-                td.style.textAlign = 'center';
-                td.style.opacity = '0.7';
-                tr.appendChild(td);
-                previewBody.appendChild(tr);
-            }
-
-            previewDiv.style.display = 'block';
-        }
-
         function confirmImport() {
-            if (importData.length === 0) {
-                tg.showAlert('Import qilish uchun ma\'lumot yo\'q!');
-                return;
-            }
-
+            if (importData.length === 0) return;
             tg.showConfirm(`${importData.length} ta qatorni import qilmoqchimisiz?`, (ok) => {
                 if (ok) {
                     workers = workers.concat(importData);
                     localStorage.setItem('patent_workers', JSON.stringify(workers));
-                    
                     updateStats();
                     closeImportModal();
-                    
                     tg.showAlert(`✅ ${importData.length} ta qator import qilindi!`);
                     tg.HapticFeedback.notificationOccurred('success');
-                    
                     importData = [];
                 }
             });
         }
 
+        // ========================================
+        // SOZLAMALAR
+        // ========================================
+        function showSettingsModal() {
+            document.getElementById('settingsModal').classList.add('show');
+            document.getElementById('botToken').value = BOT_TOKEN;
+            document.getElementById('adminChatId').value = ADMIN_CHAT_ID;
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function saveSettings() {
+            BOT_TOKEN = document.getElementById('botToken').value.trim();
+            ADMIN_CHAT_ID = document.getElementById('adminChatId').value.trim();
+            localStorage.setItem('bot_token', BOT_TOKEN);
+            localStorage.setItem('admin_chat_id', ADMIN_CHAT_ID);
+            tg.showAlert('✅ Sozlamalar saqlandi!');
+            closeSettingsModal();
+        }
+
+        async function testNotification() {
+            if (!BOT_TOKEN || !ADMIN_CHAT_ID) {
+                tg.showAlert('Avval token va admin ID ni kiriting!');
+                return;
+            }
+            const message = `✅ <b>TEST XABAR</b>\n\nPatent Takip tizimi muvaffaqiyatli ulandi!\n⏰ ${new Date().toLocaleString('tr-TR')}`;
+            const success = await sendAdminNotification(message);
+            if (success) {
+                tg.showAlert('✅ Test xabar yuborildi! Telegram\'ni tekshiring.');
+            } else {
+                tg.showAlert('❌ Xabar yuborilmadi. Token va ID ni tekshiring.');
+            }
+        }
+
         // İlk yükleme
-        checkAdmin();
         updateStats();
-        tg.ready();
     </script>
 </body>
 </html>
